@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   header: {
-    flex: 0.1,
+    flex: 0.12,
     backgroundColor: "white",
     flexDirection: "row",
   },
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    flex: 0.05,
+    flex: 0.1,
     alignItems: "center",
     padding: 8,
     backgroundColor: "white",
