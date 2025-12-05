@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { supabase } from "../supabase";
+import { geocodeLocation } from "../utils/geocoding";
 
 const CURRENT_USER_ID = "test_user_id_A";
 
@@ -58,10 +59,7 @@ const Dropdown = ({
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label} *</Text>
-      <Pressable
-        style={styles.dropdown}
-        onPress={() => setModalVisible(true)}
-      >
+      <Pressable style={styles.dropdown} onPress={() => setModalVisible(true)}>
         <Text style={[styles.dropdownText, !value && styles.placeholder]}>
           {value || placeholder}
         </Text>
@@ -167,13 +165,31 @@ export default function CreateActivity() {
         console.log("Connection test successful");
       }
 
+      // Geocode the location string
+      console.log("Geocoding location:", location);
+      const geo = await geocodeLocation(location);
+
+      if (!geo) {
+        setLoading(false);
+        Alert.alert(
+          "Location not found",
+          "We couldn't find that location. Try a more specific address (e.g. 'Toyon Hall, Stanford, CA')."
+        );
+        return;
+      }
+
+      const { latitude, longitude, address } = geo;
+      console.log("Geocoded to:", latitude, longitude, address);
+
       // Insert activity into Supabase events table
       console.log("Creating activity with data:", {
         name: activityName.trim(),
         activity_type: activityType,
         price_range: priceRange,
         time_slot: timeSlot,
-        location: location.trim(),
+        location: location.trim(), // TODO: we should explicitly add an address field
+        latitude,
+        longitude,
       });
 
       const activityData = {
@@ -196,6 +212,12 @@ export default function CreateActivity() {
       }
       if (location.trim()) {
         Object.assign(activityData, { location: location.trim() });
+      }
+      if (latitude != null && longitude != null) {
+        Object.assign(activityData, {
+          latitude,
+          longitude,
+        });
       }
 
       console.log("Inserting activity data:", activityData);
@@ -234,13 +256,15 @@ export default function CreateActivity() {
       }
 
       if (error.code === "42P01") {
-        errorMessage += "The events table doesn't exist. Please run the SQL schema.";
+        errorMessage +=
+          "The events table doesn't exist. Please run the SQL schema.";
       } else if (error.code === "23505") {
         errorMessage += "This activity already exists.";
       } else if (error.details) {
         errorMessage += `Details: ${error.details}`;
       } else {
-        errorMessage += "Please check:\n• Events table exists in Supabase\n• Supabase connection is working\n• All required fields are filled";
+        errorMessage +=
+          "Please check:\n• Events table exists in Supabase\n• Supabase connection is working\n• All required fields are filled";
       }
 
       Alert.alert("Error", errorMessage);
@@ -317,7 +341,7 @@ export default function CreateActivity() {
 
         {/* Location */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Location *</Text>
+          <Text style={styles.label}>Location or Address *</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. Stanford Shopping Center"
