@@ -13,6 +13,16 @@ import { useEffect, useState } from "react";
 interface ChatListItem {
   chat_id: string;
   event_name: string;
+  last_chat: string;
+  last_chat_time: string;
+}
+
+interface ChatData {
+  chat_id: string;
+  chats: {
+    events: { name: string } | { name: string }[] | null;
+    messages: { content: string; created_at: string }[];
+  };
 }
 const CURRENT_USER_ID = "test_user_id_A";
 
@@ -30,8 +40,8 @@ export default function Messages() {
         `
         chat_id,
         chats (
-          event_id,
-          events (name) 
+        events (name),
+        messages (content, created_at)
         )
       `
       )
@@ -42,11 +52,32 @@ export default function Messages() {
       setLoading(false);
       return;
     }
+    const rows = data as unknown as ChatData[];
+    const formattedChats: ChatListItem[] = data.map((item: any) => {
+      const messages = item.chats.messages || [];
+      messages.sort(
+        (a: { created_at: string }, b: { created_at: string }) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      const latest = messages[0];
+      const rawEvents = item.chats.events;
+      const eventName = Array.isArray(rawEvents)
+        ? rawEvents[0]?.name
+        : (rawEvents as { name: string })?.name;
 
-    const formattedChats: ChatListItem[] = data.map((item: any) => ({
-      chat_id: item.chat_id,
-      event_name: item.chats.events.name,
-    }));
+      return {
+        chat_id: item.chat_id,
+        event_name: eventName || "Unknown Event",
+        last_chat: latest?.content || "Tap to start chatting...",
+        last_chat_time: latest?.created_at || new Date(0).toISOString(),
+      };
+    });
+
+    formattedChats.sort(
+      (a, b) =>
+        new Date(b.last_chat_time).getTime() -
+        new Date(a.last_chat_time).getTime()
+    );
 
     setChats(formattedChats);
     setLoading(false);
@@ -54,6 +85,41 @@ export default function Messages() {
 
   useEffect(() => {
     fetchUserChats();
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("chat-list-updates")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const newMessage = payload.new;
+          setChats((prev) => {
+            const updated = prev.map((chat) => {
+              if (chat.chat_id === newMessage.chat_id) {
+                return {
+                  ...chat,
+                  last_chat: newMessage.content,
+                  last_chat_time: newMessage.created_at,
+                };
+              }
+              return chat;
+            });
+
+            return updated.sort(
+              (a, b) =>
+                new Date(b.last_chat_time).getTime() -
+                new Date(a.last_chat_time).getTime()
+            );
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   if (loading) {
     return (
@@ -78,7 +144,7 @@ export default function Messages() {
               <Text style={styles.emojiText}>💬</Text>
               <View style={styles.textArea}>
                 <Text style={styles.groupNameText}>{item.event_name}</Text>
-                <Text style={styles.messageText}>Tap to start chatting...</Text>
+                <Text style={styles.messageText}> {item.last_chat}</Text>
               </View>
             </View>
           </Pressable>
@@ -92,8 +158,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "flex-start",
-    //alignItems: "center",
-    // margin: 5,
   },
   flatListContent: {
     paddingVertical: 5,
@@ -117,9 +181,11 @@ const styles = StyleSheet.create({
   groupNameText: {
     fontSize: 20,
     fontWeight: "bold",
+    fontFamily: "Poppins-Bold",
   },
   messageText: {
     fontSize: 15,
+    fontFamily: "Poppins-Regular",
   },
   textArea: {
     flexDirection: "column",

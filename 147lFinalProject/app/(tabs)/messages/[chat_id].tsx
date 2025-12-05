@@ -146,7 +146,7 @@ export default function ChatRoom() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      //keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <View style={styles.header}>
         <Pressable
@@ -212,12 +212,14 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontSize: 30,
+    fontFamily: "Poppins-Bold",
   },
   backText: {
     fontSize: 30,
+    fontFamily: "Poppins-Bold",
   },
   header: {
-    flex: 0.12,
+    flex: 0.13,
     backgroundColor: "white",
     flexDirection: "row",
   },
@@ -249,6 +251,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 16,
+    fontFamily: "Poppins-Regular",
   },
   messageBubble: {
     padding: 12,
@@ -272,7 +275,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sendButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#005bbdff",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
@@ -282,6 +285,7 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: "white",
     fontWeight: "bold",
+    fontFamily: "Poppins-Bold",
   },
   center: {
     justifyContent: "center",
