@@ -13,8 +13,12 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { supabase } from "../supabase";
 import { geocodeLocation } from "../utils/geocoding";
+import { theme } from "../assets/theme";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Platform } from "react-native";
 
 const CURRENT_USER_ID = "test_user_id_A";
+const { tabColors } = theme;
 
 // Activity types matching the profile interests
 const ACTIVITY_TYPES = [
@@ -119,6 +123,8 @@ export default function CreateActivity() {
   const [activityType, setActivityType] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
+  const [date, setDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -141,6 +147,11 @@ export default function CreateActivity() {
 
     if (!timeSlot) {
       Alert.alert("Error", "Please select a time");
+      return;
+    }
+
+    if (!date) {
+      Alert.alert("Error", "Please enter a date");
       return;
     }
 
@@ -187,6 +198,7 @@ export default function CreateActivity() {
         activity_type: activityType,
         price_range: priceRange,
         time_slot: timeSlot,
+        event_date: date,
         location: location.trim(), // TODO: we should explicitly add an address field
         latitude,
         longitude,
@@ -209,6 +221,12 @@ export default function CreateActivity() {
       }
       if (timeSlot) {
         Object.assign(activityData, { time_slot: timeSlot });
+      }
+      if (date) {
+        Object.assign(activityData, {
+          // store as "YYYY-MM-DD"
+          event_date: date.toISOString().split("T")[0],
+        });
       }
       if (location.trim()) {
         Object.assign(activityData, { location: location.trim() });
@@ -361,6 +379,44 @@ export default function CreateActivity() {
           onSelect={setTimeSlot}
           placeholder="Select time"
         />
+
+        {/* Date Field */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Activity Date *</Text>
+
+          <Pressable onPress={() => setShowDatePicker(true)}>
+            <Text style={[styles.input, { color: date ? "#000" : "#999" }]}>
+              {date
+                ? date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Select a date"}
+            </Text>
+          </Pressable>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={date ?? new Date()}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(event, selectedDate) => {
+                // On Android, user can dismiss the picker
+                if (Platform.OS === "android") {
+                  setShowDatePicker(false);
+                }
+
+                if (selectedDate) {
+                  setDate(selectedDate);
+                  if (Platform.OS === "ios") {
+                    setShowDatePicker(false);
+                  }
+                }
+              }}
+            />
+          )}
+        </View>
 
         {/* Location */}
         <View style={styles.inputGroup}>
@@ -527,7 +583,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   createButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: tabColors.inactiveColor,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: "center",

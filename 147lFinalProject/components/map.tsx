@@ -49,11 +49,14 @@ export default function Map() {
 
   const fetchEvents = async () => {
     try {
-      const { data } = await supabase
+      // Format in "YYYY-MM-DD"
+      const today = new Date().toISOString().split("T")[0];
+
+      const { data, error } = await supabase
         .from("events")
         .select("*")
-        .order("date", { ascending: false });
-
+        .gte("event_date", today)
+        .order("event_date", { ascending: true });
       setDbEvents(data ?? []);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -69,6 +72,7 @@ export default function Map() {
       name: "Home",
       activity_type: "Home",
       location: "You are here!",
+      event_date: "2025-12-25",
       latitude: region.latitude,
       longitude: region.longitude,
     };
