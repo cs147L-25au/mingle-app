@@ -1,4 +1,4 @@
-// TODO: add remaining fields, as this does not fully represent an Event entry
+// TODO: add time and date field
 export type Event = {
   id: string;
   name: string;
@@ -17,4 +17,5 @@ export type ActivityType =
   | "Gaming"
   | "Art & Museums"
   | "Coffee & Cafes"
+  | "Home"
   | "Other";

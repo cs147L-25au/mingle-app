@@ -7,16 +7,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
-import Entypo from "@expo/vector-icons/Entypo";
+import MapView, { PROVIDER_GOOGLE, Region } from "react-native-maps";
 import * as Location from "expo-location";
-import { theme } from "../assets/theme";
 import { mapStyle } from "../assets/map-style";
 import { Event } from "../utils/types";
 import EventMarkers from "./marker";
 import { supabase } from "../supabase";
-
-const { markerColors, sizes } = theme;
 
 export default function Map() {
   // Citation for location code: Lecture 5a snack - https://snack.expo.dev/@alan7cheng/cs-147l-25au---lecture-5a
@@ -53,29 +49,31 @@ export default function Map() {
 
   const fetchEvents = async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("events")
         .select("*")
         .order("date", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching events:", error);
-        throw error;
+      let allEvents: Event[] = data ?? [];
+
+      // If region is available, append a fake “home event”
+      if (region) {
+        allEvents = [
+          ...allEvents,
+          {
+            id: "home-marker",
+            name: "Home",
+            activity_type: "Home",
+            location: "You are here!",
+            latitude: region.latitude,
+            longitude: region.longitude,
+          },
+        ];
       }
 
-      const allEvents: Event[] = data ?? [];
       setEvents(allEvents);
-
-      return allEvents.map((event) => ({
-        id: event.id,
-        name: event.name,
-        activity_type: event.activity_type,
-        location: event.location,
-        latitude: event.latitude,
-        longitude: event.longitude,
-      }));
     } catch (error) {
-      console.error("Error fetching comments:", error);
+      console.error("Error fetching events:", error);
     }
   };
 
@@ -143,16 +141,6 @@ export default function Map() {
         showsUserLocation={false}
         customMapStyle={mapStyle}
       >
-        <Marker
-          coordinate={{
-            latitude: region.latitude,
-            longitude: region.longitude,
-          }}
-        >
-          <View style={styles.markerCircle}>
-            <Entypo name="home" size={theme.sizes.markerIcon} color="black" />
-          </View>
-        </Marker>
         <EventMarkers events={events} />
       </MapView>
     </View>
@@ -168,16 +156,6 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  markerCircle: {
-    backgroundColor: markerColors.Home,
-    height: sizes.markerCircle,
-    aspectRatio: 1,
-    borderRadius: sizes.markerCircleRadius,
-    borderWidth: 2,
-
     alignItems: "center",
     justifyContent: "center",
   },

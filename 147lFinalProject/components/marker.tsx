@@ -10,7 +10,7 @@ type EventMarkersProps = {
   events: Event[];
 };
 
-const { sizes } = theme;
+const { sizes, markerColors } = theme;
 
 export default function EventMarkers({ events }: EventMarkersProps) {
   return (
@@ -29,9 +29,13 @@ export default function EventMarkers({ events }: EventMarkersProps) {
               }}
               title={event.name}
               description={event.location ?? undefined}
+              anchor={{ x: 0.5, y: 1 }}
             >
-              <View style={[styles.markerCircle, { backgroundColor: color }]}>
-                {icon}
+              <View style={styles.markerContainer}>
+                <View style={[styles.outerCircle, { backgroundColor: color }]}>
+                  <View style={styles.innerCircle}>{icon}</View>
+                </View>
+                <View style={[styles.pinTip, { borderTopColor: color }]} />
               </View>
             </Marker>
           );
@@ -41,12 +45,44 @@ export default function EventMarkers({ events }: EventMarkersProps) {
 }
 
 const styles = StyleSheet.create({
-  markerCircle: {
-    height: sizes.markerCircle,
+  markerContainer: {
+    alignItems: "center",
+  },
+
+  outerCircle: {
+    height: sizes.markerOuterCircle,
     aspectRatio: 1,
-    borderRadius: sizes.markerCircleRadius,
-    borderWidth: 2,
+
+    borderRadius: sizes.markerOuterCircleRadius,
     alignItems: "center",
     justifyContent: "center",
+
+    zIndex: 2,
+    elevation: 3, // stays above tip
+  },
+
+  innerCircle: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: markerColors.White,
+
+    height: sizes.markerInnerCircle,
+    aspectRatio: 1,
+    borderRadius: sizes.markerInnerCircleRadius,
+
+    zIndex: 3, // icon layer on top of circle
+    elevation: 4,
+  },
+  pinTip: {
+    width: 0,
+    height: 0,
+    marginTop: -5.2,
+
+    borderLeftWidth: 14,
+    borderRightWidth: 14,
+    borderTopWidth: 12, // taller triangle
+
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
   },
 });

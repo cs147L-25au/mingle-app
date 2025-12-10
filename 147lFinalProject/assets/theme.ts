@@ -1,19 +1,23 @@
 export const theme = {
   // This is a mapping between activity and color
   markerColors: {
-    Home: "#FDB7EA",
-    "Food & Dining": "#B7B1F2",
+    Home: "#f347c5ff",
+    "Food & Dining": "#aca3f6ff",
     Hiking: "#F0DBAF",
-    Movies: "#BADFDB",
+    Movies: "#89e3daff",
     Concerts: "#7ED7C1",
-    Sports: "#A1BC98",
+    Sports: "#8cb080ff",
     Gaming: "#DC8686",
     "Art & Museums": "#0097A7",
-    "Coffee & Cafes": "#CFAB8D",
+    "Coffee & Cafes": "#C1856D",
+    Other: "#6AECE1",
+    White: "white",
   },
   sizes: {
-    markerCircle: 40,
-    markerCircleRadius: 20,
-    markerIcon: 20,
+    markerOuterCircle: 40,
+    markerOuterCircleRadius: 20,
+    markerInnerCircle: 30,
+    markerInnerCircleRadius: 15,
+    markerIcon: 17,
   },
 };
