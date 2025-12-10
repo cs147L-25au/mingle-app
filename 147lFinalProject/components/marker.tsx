@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
 
     borderLeftWidth: 14,
     borderRightWidth: 14,
-    borderTopWidth: 12, // taller triangle
+    borderTopWidth: 13, // taller triangle
 
     borderLeftColor: "transparent",
     borderRightColor: "transparent",

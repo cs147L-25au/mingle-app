@@ -87,17 +87,17 @@ function TabBarItem({ icon, isFocused, onPress }: TabBarItemProps) {
       Animated.sequence([
         Animated.timing(shakeAnim, {
           toValue: 1, // rotate left
-          duration: 100,
+          duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(shakeAnim, {
           toValue: -1, // then rotate right
-          duration: 100,
+          duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(shakeAnim, {
           toValue: 0, // back to center
-          duration: 100,
+          duration: 150,
           useNativeDriver: true,
         }),
       ]).start();
