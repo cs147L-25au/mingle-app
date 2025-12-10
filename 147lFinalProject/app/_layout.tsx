@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
 import { useEffect } from "react";
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     "Poppins-Regular": require("../assets/fonts/Poppins-Regular.ttf"),

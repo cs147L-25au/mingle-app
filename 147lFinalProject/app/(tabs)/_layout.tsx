@@ -1,19 +1,17 @@
 import { Tabs } from "expo-router";
+import AnimatedTabBar from "../../utils/animatedTabBar";
 
 export default function TabLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen name="index" options={{ headerShown: false }} />
-      <Tabs.Screen name="feed" options={{ title: "Feed" }} />
-      <Tabs.Screen name="messages/index" options={{ title: "Messages" }} />
-      <Tabs.Screen
-        name="messages/[chat_id]"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: "none" },
-        }}
-      />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+      }}
+      tabBar={(props) => <AnimatedTabBar {...props} />}
+    >
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
+      <Tabs.Screen name="feed" options={{ title: "Explore" }} />
+      <Tabs.Screen name="messages" options={{ title: "Messages" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );

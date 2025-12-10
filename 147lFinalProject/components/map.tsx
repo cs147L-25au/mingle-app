@@ -5,11 +5,11 @@
  * 4. tutorials on customizing the map pins: https://blog.spirokit.com/maps-in-react-native-adding-interactive-markers
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Region } from "react-native-maps";
 import * as Location from "expo-location";
-import { mapStyle } from "../assets/map-style";
+import { mapStyle } from "../assets/mapStyle";
 import { Event } from "../utils/types";
 import EventMarkers from "./marker";
 import { supabase } from "../supabase";
@@ -21,7 +21,7 @@ export default function Map() {
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [dbEvents, setDbEvents] = useState<Event[]>([]);
   const mapRef = useRef<MapView | null>(null);
 
   const getLocation = () => {
@@ -54,28 +54,27 @@ export default function Map() {
         .select("*")
         .order("date", { ascending: false });
 
-      let allEvents: Event[] = data ?? [];
-
-      // If region is available, append a fake “home event”
-      if (region) {
-        allEvents = [
-          ...allEvents,
-          {
-            id: "home-marker",
-            name: "Home",
-            activity_type: "Home",
-            location: "You are here!",
-            latitude: region.latitude,
-            longitude: region.longitude,
-          },
-        ];
-      }
-
-      setEvents(allEvents);
+      setDbEvents(data ?? []);
     } catch (error) {
       console.error("Error fetching events:", error);
     }
   };
+
+  // Home/current location isn't (and shouldn't) be stored in DB, so this function resolves that
+  const events = useMemo(() => {
+    if (!region) return dbEvents;
+
+    const home: Event = {
+      id: "home-event",
+      name: "Home",
+      activity_type: "Home",
+      location: "You are here!",
+      latitude: region.latitude,
+      longitude: region.longitude,
+    };
+
+    return [...dbEvents, home];
+  }, [dbEvents, region]);
 
   useEffect(() => {
     getLocation();
