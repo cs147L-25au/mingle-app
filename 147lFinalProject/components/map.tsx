@@ -28,28 +28,35 @@ export default function Map() {
   const mapRef = useRef<MapView | null>(null);
 
   const session = useSession();
+  const getLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
 
-  const getLocation = () => {
-    Location.requestForegroundPermissionsAsync()
-      .then(({ status }) => {
-        if (status !== "granted") {
-          setErrorMsg("Permission to access location was denied...");
-          return null;
-        }
-        return Location.getCurrentPositionAsync();
-      })
-      .then((loc) => {
-        if (loc != null) {
-          setLocation(loc);
-          const { latitude, longitude } = loc.coords;
-          setRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
-          });
-        }
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied.");
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced, // often enough and faster on Android
       });
+
+      setLocation(loc);
+
+      const { latitude, longitude } = loc.coords;
+      setRegion({
+        latitude,
+        longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      });
+    } catch (err: any) {
+      console.log("Location error:", err);
+      setErrorMsg(
+        err?.message ??
+          "Unable to get your location. Please check GPS settings."
+      );
+    }
   };
 
   const fetchEvents = async () => {
