@@ -29,4 +29,7 @@ export const theme = {
     createActivity: "#8174A0",
     white: "#fff",
   },
+  eventModal: {
+    chipColors: "rgba(197, 153, 182, 0.8)",
+  },
 };

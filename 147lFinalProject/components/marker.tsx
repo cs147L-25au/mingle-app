@@ -6,11 +6,15 @@ import { getActivityStyle } from "../utils/getEventIcons";
 
 type EventMarkersProps = {
   events: Event[];
+  onEventPress?: (event: Event) => void;
 };
 
 const { sizes, markerColors } = theme;
 
-export default function EventMarkers({ events }: EventMarkersProps) {
+export default function EventMarkers({
+  events,
+  onEventPress,
+}: EventMarkersProps) {
   const coordCounts = new Map<string, number>();
 
   return (
@@ -51,6 +55,7 @@ export default function EventMarkers({ events }: EventMarkersProps) {
               title={event.name}
               description={event.location ?? undefined}
               anchor={{ x: 0.5, y: 1 }}
+              onPress={() => onEventPress?.(event)}
             >
               <View style={styles.markerContainer}>
                 <View style={[styles.outerCircle, { backgroundColor: color }]}>

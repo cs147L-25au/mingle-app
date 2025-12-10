@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
-import { supabase } from "../supabase";
+import supabase from "../supabase";
 
 const CURRENT_USER_ID = "test_user_id_A";
 
@@ -99,7 +99,8 @@ export default function CreateProfile() {
       if (error.message) {
         errorMessage += error.message;
       } else if (error.code === "42P01") {
-        errorMessage += "Database table not found. Please run the SQL schema first.";
+        errorMessage +=
+          "Database table not found. Please run the SQL schema first.";
       } else {
         errorMessage += "Please check your database setup.";
       }

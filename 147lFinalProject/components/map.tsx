@@ -5,14 +5,16 @@
  * 4. tutorials on customizing the map pins: https://blog.spirokit.com/maps-in-react-native-adding-interactive-markers
  */
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Region } from "react-native-maps";
 import * as Location from "expo-location";
 import { mapStyle } from "../assets/mapStyle";
 import { Event } from "../utils/types";
 import EventMarkers from "./marker";
-import { supabase } from "../supabase";
+import supabase from "../supabase";
+import EventDetails from "./eventDetails";
+import useSession from "../utils/useSession";
 
 export default function Map() {
   // Citation for location code: Lecture 5a snack - https://snack.expo.dev/@alan7cheng/cs-147l-25au---lecture-5a
@@ -22,7 +24,10 @@ export default function Map() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [dbEvents, setDbEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const mapRef = useRef<MapView | null>(null);
+
+  const session = useSession();
 
   const getLocation = () => {
     Location.requestForegroundPermissionsAsync()
@@ -49,14 +54,19 @@ export default function Map() {
 
   const fetchEvents = async () => {
     try {
-      // Format in "YYYY-MM-DD"
-      const today = new Date().toISOString().split("T")[0];
+      // Today's date in local time, as "YYYY-MM-DD"
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const today = `${year}-${month}-${day}`;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("events")
         .select("*")
         .gte("event_date", today)
         .order("event_date", { ascending: true });
+
       setDbEvents(data ?? []);
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -70,7 +80,10 @@ export default function Map() {
     const home: Event = {
       id: "home-event",
       name: "Home",
+      description: "",
       activity_type: "Home",
+      price_range: "",
+      time_slot: "",
       location: "You are here!",
       event_date: "2025-12-25",
       latitude: region.latitude,
@@ -144,8 +157,15 @@ export default function Map() {
         showsUserLocation={false}
         customMapStyle={mapStyle}
       >
-        <EventMarkers events={events} />
+        <EventMarkers events={events} onEventPress={setSelectedEvent} />
       </MapView>
+
+      <EventDetails
+        visible={!!selectedEvent}
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        currentUserId={session.user.id}
+      />
     </View>
   );
 }
