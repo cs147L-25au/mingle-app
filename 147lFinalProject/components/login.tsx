@@ -8,6 +8,7 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -17,6 +18,9 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const signInWithEmail = async () => {
     setLoading(true);
@@ -39,12 +43,101 @@ export default function Login() {
     }
   };
 
-  const isSignInDisabled =
-    loading || email.length === 0 || password.length === 0;
+  const signUpWithEmail = async () => {
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
+    setPasswordError("");
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          emailRedirectTo: undefined,
+        },
+      });
+
+      if (error) {
+        Alert.alert("Sign Up Error", error.message);
+        setLoading(false);
+        return;
+      }
+
+      Alert.alert(
+        "Success!",
+        "Account created successfully. You can now sign in.",
+        [{ text: "OK" }]
+      );
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Sign up error:", err);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const isButtonDisabled =
+    mode === "signin"
+      ? loading || email.length === 0 || password.length === 0
+      : loading ||
+        email.length === 0 ||
+        password.length === 0 ||
+        confirmPassword.length === 0;
 
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      {/* Segmented Control */}
+      <View style={styles.segmentedControl}>
+        <TouchableOpacity
+          style={[
+            styles.segmentButton,
+            styles.segmentButtonLeft,
+            mode === "signin" && styles.segmentButtonActive,
+          ]}
+          onPress={() => {
+            setMode("signin");
+            setConfirmPassword("");
+            setPasswordError("");
+          }}
+        >
+          <Text
+            style={[
+              styles.segmentText,
+              mode === "signin" && styles.segmentTextActive,
+            ]}
+          >
+            Sign In
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.segmentButton,
+            styles.segmentButtonRight,
+            mode === "signup" && styles.segmentButtonActive,
+          ]}
+          onPress={() => {
+            setMode("signup");
+            setPasswordError("");
+          }}
+        >
+          <Text
+            style={[
+              styles.segmentText,
+              mode === "signup" && styles.segmentTextActive,
+            ]}
+          >
+            Sign Up
+          </Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.splash}>
         <MaterialCommunityIcons size={64} name="bee-flower" color={"red"} />
         <Text style={styles.splashText}>Fizz</Text>
@@ -61,24 +154,56 @@ export default function Login() {
         onChangeText={(text) => setPassword(text)}
         value={password}
         placeholder="Password"
-        placeholderTextColor="Set password here"
+        placeholderTextColor="gray"
         secureTextEntry={true}
         autoCapitalize={"none"}
+        textContentType={mode === "signin" ? "password" : "newPassword"}
+        autoComplete={mode === "signin" ? "password" : "password-new"}
         style={styles.input}
       />
+      {mode === "signup" && (
+        <>
+          <TextInput
+            onChangeText={(text) => {
+              setConfirmPassword(text);
+              if (passwordError) setPasswordError("");
+            }}
+            value={confirmPassword}
+            placeholder="Confirm Password"
+            placeholderTextColor="gray"
+            secureTextEntry={true}
+            autoCapitalize={"none"}
+            textContentType="newPassword"
+            autoComplete="password-new"
+            style={[
+              styles.input,
+              passwordError ? styles.inputError : undefined,
+            ]}
+          />
+          {passwordError ? (
+            <Text style={styles.errorText}>{passwordError}</Text>
+          ) : null}
+        </>
+      )}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          onPress={() => signInWithEmail()}
-          disabled={isSignInDisabled}
+          onPress={() =>
+            mode === "signin" ? signInWithEmail() : signUpWithEmail()
+          }
+          disabled={isButtonDisabled}
         >
-          <Text
-            style={[
-              styles.button,
-              isSignInDisabled ? styles.buttonDisabled : undefined,
-            ]}
-          >
-            Sign in
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#007AFF" />
+          ) : (
+            <Text
+              style={[
+                styles.button,
+                isButtonDisabled ? styles.buttonDisabled : undefined,
+              ]}
+            >
+              {mode === "signin" ? "Sign In" : "Create Account"}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -127,5 +252,52 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     color: "gray",
+  },
+  segmentedControl: {
+    flexDirection: "row",
+    marginBottom: 24,
+    marginTop: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#007AFF",
+    overflow: "hidden",
+  },
+  segmentButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  segmentButtonLeft: {
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+  },
+  segmentButtonRight: {
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+    borderLeftWidth: 1,
+    borderLeftColor: "#007AFF",
+  },
+  segmentButtonActive: {
+    backgroundColor: "#007AFF",
+  },
+  segmentText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
+  },
+  segmentTextActive: {
+    color: "#fff",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+    borderWidth: 1,
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 8,
   },
 });
