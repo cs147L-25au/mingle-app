@@ -185,7 +185,12 @@ export default function Feed() {
 
 const COLORS = {
   background: "#FAF8FC",
+  brandPurple: "#8174A0",
+  brandPink: "#C599B6",
   textPrimary: "#2D2438",
+  textSecondary: "#6B6078",
+  textTertiary: "#9B8FA8",
+  white: "#FFFFFF",
   cardBg: "#FFFFFF",
   border: "#E0D8E8",
 };
@@ -197,8 +202,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 15,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
     backgroundColor: COLORS.background,
   },
   headerText: {
@@ -208,16 +211,18 @@ const styles = StyleSheet.create({
   flatListContent: { paddingVertical: 10, paddingHorizontal: 10, gap: 10 },
   postCard: {
     height: 450,
-    borderWidth: 1,
+    borderWidth: 2,
     marginBottom: 20,
     overflow: "hidden",
     backgroundColor: COLORS.cardBg,
+    borderColor: COLORS.border,
     position: "relative",
     alignItems: "center",
   },
   postImage: {
     width: "90%",
     borderWidth: 2,
+    borderColor: COLORS.cardBg,
     aspectRatio: 1,
     marginTop: 35,
   },
