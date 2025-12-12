@@ -10,21 +10,23 @@ import {
   Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import supabase from "../../../supabase";
+import supabase from "../../supabase";
 import { useEffect, useState, useRef } from "react";
+import { theme } from "../../assets/theme";
 
 interface Message {
   id: number;
   content: string;
   user_id: string;
   created_at: string;
+  type?: string;
 }
 
 interface ProfileMap {
   [userId: string]: string;
 }
 
-const CURRENT_USER_ID = "test_user_id_A";
+//const CURRENT_USER_ID = "test_user_id_A";
 const MessageBubble = ({
   text,
   isMe,
@@ -38,7 +40,12 @@ const MessageBubble = ({
     <View
       style={[
         styles.messageBubble,
-        isMe ? styles.myMessage : styles.theirMessage,
+        isMe
+          ? [
+              styles.myMessage,
+              { backgroundColor: theme.tabColors.createActivity },
+            ]
+          : styles.theirMessage,
       ]}
     >
       <Text
@@ -53,6 +60,12 @@ const MessageBubble = ({
     {!isMe && <Text style={styles.senderNameText}>{senderName}</Text>}
   </View>
 );
+
+const SystemMessage = ({ text }: { text: string }) => (
+  <View style={styles.systemMessageWrapper}>
+    <Text style={styles.systemMessageText}>{text}</Text>
+  </View>
+);
 export default function ChatRoom() {
   const router = useRouter();
   const { chat_id } = useLocalSearchParams();
@@ -64,13 +77,26 @@ export default function ChatRoom() {
   const [memberCount, setMemberCount] = useState(0);
   const [profilesMap, setProfilesMap] = useState<ProfileMap>({});
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   const fetchChatData = async () => {
     setLoading(true);
 
     const { data: messagesData, error: messagesError } = await supabase
       .from("messages")
-      .select(`id, content, user_id, created_at`)
+      .select("id, content, user_id, created_at, type")
       .eq("chat_id", chat_id)
       .order("created_at", { ascending: true });
 
@@ -169,7 +195,9 @@ export default function ChatRoom() {
           const newMessage = payload.new as Message;
 
           setMessages((currentMessages) => [...currentMessages, newMessage]);
-          await fetchUserNames([newMessage]);
+          if (newMessage.type !== "system") {
+            await fetchUserNames([newMessage]);
+          }
         }
       )
       .subscribe();
@@ -201,15 +229,16 @@ export default function ChatRoom() {
   }, [chat_id]);
 
   const sendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !currentUserId) return;
 
     const messageText = inputText;
     setInputText("");
 
     const { error } = await supabase.from("messages").insert({
       chat_id: chat_id,
-      user_id: CURRENT_USER_ID,
+      user_id: currentUserId,
       content: messageText,
+      type: "text",
     });
 
     if (error) {
@@ -230,12 +259,16 @@ export default function ChatRoom() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      //keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: theme.tabColors.activeColor },
+        ]}
+      >
         <Pressable
           style={styles.chatTitle}
-          onPress={() => router.push("tabs/messages")}
+          onPress={() => router.navigate("/tabs/messages")}
         >
           <Text style={styles.backText}>{"<"}</Text>
         </Pressable>
@@ -253,22 +286,28 @@ export default function ChatRoom() {
           scrollViewRef.current?.scrollToEnd({ animated: true })
         }
       >
-        {messages.map((message) => (
-          <View
-            key={message.id}
-            style={
-              message.user_id === CURRENT_USER_ID
-                ? styles.myMessageWrapper
-                : styles.theirMessageWrapper
-            }
-          >
-            <MessageBubble
-              text={message.content}
-              isMe={message.user_id === CURRENT_USER_ID}
-              senderName={profilesMap[message.user_id] || "Loading..."}
-            />
-          </View>
-        ))}
+        {messages.map((message) => {
+          if (message.type === "system") {
+            return <SystemMessage key={message.id} text={message.content} />;
+          }
+
+          return (
+            <View
+              key={message.id}
+              style={
+                message.user_id === currentUserId
+                  ? styles.myMessageWrapper
+                  : styles.theirMessageWrapper
+              }
+            >
+              <MessageBubble
+                text={message.content}
+                isMe={message.user_id === currentUserId}
+                senderName={profilesMap[message.user_id] || "Loading..."}
+              />
+            </View>
+          );
+        })}
       </ScrollView>
 
       <View style={styles.inputContainer}>
@@ -279,7 +318,13 @@ export default function ChatRoom() {
           value={inputText}
           onChangeText={setInputText}
         />
-        <Pressable style={styles.sendButton} onPress={sendMessage}>
+        <Pressable
+          style={[
+            styles.sendButton,
+            { backgroundColor: theme.tabColors.inactiveColor },
+          ]}
+          onPress={sendMessage}
+        >
           <Text style={styles.sendButtonText}>Send</Text>
         </Pressable>
       </View>
@@ -290,24 +335,27 @@ export default function ChatRoom() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#d8efffff",
+    backgroundColor: "#fffdf0ff",
   },
   chatTitle: {
-    justifyContent: "flex-end",
+    justifyContent: "center",
     marginLeft: "3%",
   },
   titleText: {
     fontSize: 30,
-    fontFamily: "Poppins-Bold",
+    fontWeight: "bold",
+    //  fontFamily: "Poppins-Bold",
   },
   backText: {
+    fontWeight: "bold",
     fontSize: 30,
     fontFamily: "Poppins-Bold",
   },
   header: {
-    flex: 0.13,
-    backgroundColor: "white",
+    flex: 0.14,
+    paddingTop: 20,
     flexDirection: "row",
+    borderRadius: 8,
   },
   messagesView: {
     flex: 1,
@@ -379,14 +427,27 @@ const styles = StyleSheet.create({
   },
   memberCountText: {
     fontSize: 12,
-    fontFamily: "Poppins-Regular",
-    color: "#666",
+    fontWeight: "bold",
+    // fontFamily: "Poppins-Bold",
+    color: "#f3f3f3ff",
     marginTop: -5,
   },
   senderNameText: {
     fontSize: 10,
     color: "#666",
     marginTop: 4,
+    fontFamily: "Poppins-Regular",
+  },
+  systemMessageWrapper: {
+    alignItems: "center",
+    marginVertical: 10,
+    paddingHorizontal: 20,
+  },
+  systemMessageText: {
+    color: "#888",
+    fontSize: 13,
+    fontStyle: "italic",
+    textAlign: "center",
     fontFamily: "Poppins-Regular",
   },
 });

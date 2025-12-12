@@ -282,6 +282,23 @@ export default function CreateActivity() {
 
       if (participantError) throw participantError;
 
+      const { data: profileData, error: profileErr } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("user_id", session?.user?.id)
+        .single();
+
+      console.log("profile error:", profileErr);
+
+      const userName = profileData?.name ?? "Someone";
+
+      await supabase.from("messages").insert({
+        chat_id: chatData.id,
+        user_id: session?.user?.id,
+        type: "system",
+        content: `${userName} created the activity`,
+      });
+
       console.log("Chat room created and creator added!");
 
       console.log("Activity created successfully:", data);

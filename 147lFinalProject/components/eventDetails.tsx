@@ -92,6 +92,51 @@ export default function EventDetails({
       return;
     }
 
+    try {
+      // Find the chat associated with this event
+      const { data: chatData, error: chatError } = await supabase
+        .from("chats")
+        .select("id")
+        .eq("event_id", event.id)
+        .single();
+
+      if (chatData) {
+        // Add user to the chat
+        const { error: joinError } = await supabase
+          .from("chat_participants")
+          .insert({
+            chat_id: chatData.id,
+            user_id: currentUserId,
+          });
+        if (!joinError || joinError.code === "23505") {
+          // Fetch the user's name
+          const { data: profile, error: profileErr } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("user_id", currentUserId)
+            .single();
+
+          if (profileErr) {
+            console.error("Failed to fetch user name:", profileErr);
+          }
+
+          const userName = profile?.name || "Someone";
+
+          // Insert system message with the user's name
+          await supabase.from("messages").insert({
+            chat_id: chatData.id,
+            user_id: currentUserId,
+            type: "system",
+            content: `${userName} joined the group`,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error joining chat group:", err);
+    }
+
+    setLoading(false);
+
     setIsAttending(true);
   };
 
