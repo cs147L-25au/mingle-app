@@ -9,10 +9,23 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import supabase from "../supabase";
+
+// Mingle Brand Colors
+const COLORS = {
+  background: '#FAF8FC',
+  brandPurple: '#8174A0',
+  brandPink: '#C599B6',
+  textPrimary: '#2D2438',
+  textSecondary: '#6B6078',
+  textTertiary: '#9B8FA8',
+  inputBorder: '#E0D8E8',
+  buttonText: '#FFFFFF',
+  white: '#FFFFFF',
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -92,13 +105,24 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Image
+          source={require('../assets/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>Mingle</Text>
+        <Text style={styles.tagline}>Connect through activities</Text>
+      </View>
+
       {/* Segmented Control */}
       <View style={styles.segmentedControl}>
         <TouchableOpacity
           style={[
             styles.segmentButton,
-            styles.segmentButtonLeft,
             mode === "signin" && styles.segmentButtonActive,
           ]}
           onPress={() => {
@@ -120,7 +144,6 @@ export default function Login() {
         <TouchableOpacity
           style={[
             styles.segmentButton,
-            styles.segmentButtonRight,
             mode === "signup" && styles.segmentButtonActive,
           ]}
           onPress={() => {
@@ -138,166 +161,248 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.splash}>
-        <MaterialCommunityIcons size={64} name="bee-flower" color={"red"} />
-        <Text style={styles.splashText}>Fizz</Text>
-      </View>
-      <TextInput
-        onChangeText={(text) => setEmail(text)}
-        value={email}
-        placeholder="email@address.com"
-        placeholderTextColor={"gray"}
-        autoCapitalize={"none"}
-        style={styles.input}
-      />
-      <TextInput
-        onChangeText={(text) => setPassword(text)}
-        value={password}
-        placeholder="Password"
-        placeholderTextColor="gray"
-        secureTextEntry={true}
-        autoCapitalize={"none"}
-        textContentType={mode === "signin" ? "password" : "newPassword"}
-        autoComplete={mode === "signin" ? "password" : "password-new"}
-        style={styles.input}
-      />
-      {mode === "signup" && (
-        <>
+
+      {/* Form Section */}
+      <View style={styles.formSection}>
+        {/* Email Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>EMAIL</Text>
           <TextInput
-            onChangeText={(text) => {
-              setConfirmPassword(text);
-              if (passwordError) setPasswordError("");
-            }}
-            value={confirmPassword}
-            placeholder="Confirm Password"
-            placeholderTextColor="gray"
-            secureTextEntry={true}
-            autoCapitalize={"none"}
-            textContentType="newPassword"
-            autoComplete="password-new"
-            style={[
-              styles.input,
-              passwordError ? styles.inputError : undefined,
-            ]}
+            onChangeText={(text) => setEmail(text)}
+            value={email}
+            placeholder="email@address.com"
+            placeholderTextColor={COLORS.textTertiary}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            style={styles.input}
           />
-          {passwordError ? (
-            <Text style={styles.errorText}>{passwordError}</Text>
-          ) : null}
-        </>
-      )}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          onPress={() =>
-            mode === "signin" ? signInWithEmail() : signUpWithEmail()
-          }
-          disabled={isButtonDisabled}
-        >
-          {loading ? (
-            <ActivityIndicator color="#007AFF" />
-          ) : (
-            <Text
-              style={[
-                styles.button,
-                isButtonDisabled ? styles.buttonDisabled : undefined,
-              ]}
-            >
-              {mode === "signin" ? "Sign In" : "Create Account"}
-            </Text>
-          )}
-        </TouchableOpacity>
+        </View>
+
+        {/* Password Input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>PASSWORD</Text>
+          <TextInput
+            onChangeText={(text) => setPassword(text)}
+            value={password}
+            placeholder="Enter your password"
+            placeholderTextColor={COLORS.textTertiary}
+            secureTextEntry={true}
+            autoCapitalize="none"
+            textContentType={mode === "signin" ? "password" : "newPassword"}
+            autoComplete={mode === "signin" ? "password" : "password-new"}
+            style={styles.input}
+          />
+        </View>
+
+        {/* Confirm Password Input (Sign Up Only) */}
+        {mode === "signup" && (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>CONFIRM PASSWORD</Text>
+              <TextInput
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (passwordError) setPasswordError("");
+                }}
+                value={confirmPassword}
+                placeholder="Confirm your password"
+                placeholderTextColor={COLORS.textTertiary}
+                secureTextEntry={true}
+                autoCapitalize="none"
+                textContentType="newPassword"
+                autoComplete="password-new"
+                style={[
+                  styles.input,
+                  passwordError ? styles.inputError : undefined,
+                ]}
+              />
+            </View>
+            {passwordError ? (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            ) : null}
+          </>
+        )}
+      </View>
+
+      {/* Action Button */}
+      <TouchableOpacity
+        onPress={() =>
+          mode === "signin" ? signInWithEmail() : signUpWithEmail()
+        }
+        disabled={isButtonDisabled}
+        style={[
+          styles.button,
+          isButtonDisabled && styles.buttonDisabled,
+        ]}
+        activeOpacity={0.8}
+      >
+        {loading ? (
+          <ActivityIndicator color={COLORS.white} />
+        ) : (
+          <Text style={styles.buttonText}>
+            {mode === "signin" ? "Sign In" : "Create Account"}
+          </Text>
+        )}
+      </TouchableOpacity>
+
+      {/* Footer Toggle */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          {mode === "signin"
+            ? "Don't have an account? "
+            : "Already have an account? "}
+          <Text
+            style={styles.footerLink}
+            onPress={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setConfirmPassword("");
+              setPasswordError("");
+            }}
+          >
+            {mode === "signin" ? "Sign Up" : "Sign In"}
+          </Text>
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Container
   container: {
-    paddingTop: 60,
-    padding: 12,
-    backgroundColor: "white",
     flex: 1,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: 28,
+    paddingTop: 60,
+    paddingBottom: 24,
   },
-  splash: {
-    alignItems: "center",
-    marginBottom: 12,
+
+  // Header
+  header: {
+    marginBottom: 40,
+    alignItems: 'center',
   },
-  splashText: {
-    fontWeight: "bold",
-    color: "black",
-    fontSize: 60,
+  logo: {
+    width: 88,
+    height: 88,
+    marginBottom: 16,
   },
-  buttonContainer: {
-    marginTop: 12,
-    flexDirection: "row",
-    justifyContent: "space-around",
+  title: {
+    fontSize: 52,
+    fontWeight: 'bold',
+    letterSpacing: -1,
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  verticallySpaced: {
-    marginVertical: 4,
-    alignSelf: "stretch",
+  tagline: {
+    fontSize: 17,
+    lineHeight: 24,
+    color: COLORS.brandPurple,
+    textAlign: 'center',
   },
-  mt20: {
-    marginTop: 20,
-  },
-  input: {
-    color: "black",
-    backgroundColor: "white",
-    width: "100%",
-    padding: 16,
-  },
-  button: {
-    color: "purple",
-    fontSize: 18,
-    fontWeight: "normal",
-    padding: 8,
-  },
-  buttonDisabled: {
-    color: "gray",
-  },
+
+  // Segmented Control
   segmentedControl: {
-    flexDirection: "row",
-    marginBottom: 24,
-    marginTop: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#007AFF",
-    overflow: "hidden",
+    flexDirection: 'row',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.brandPurple,
+    overflow: 'hidden',
+    marginBottom: 32,
   },
   segmentButton: {
     flex: 1,
     paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-  },
-  segmentButtonLeft: {
-    borderTopLeftRadius: 8,
-    borderBottomLeftRadius: 8,
-  },
-  segmentButtonRight: {
-    borderTopRightRadius: 8,
-    borderBottomRightRadius: 8,
-    borderLeftWidth: 1,
-    borderLeftColor: "#007AFF",
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   segmentButtonActive: {
-    backgroundColor: "#007AFF",
+    backgroundColor: COLORS.brandPurple,
   },
   segmentText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007AFF",
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.brandPurple,
   },
   segmentTextActive: {
-    color: "#fff",
+    color: COLORS.white,
+  },
+
+  // Form
+  formSection: {
+    marginBottom: 40,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0.2,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+  },
+  input: {
+    fontSize: 17,
+    lineHeight: 24,
+    color: COLORS.textPrimary,
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.inputBorder,
   },
   inputError: {
-    borderColor: "#FF3B30",
-    borderWidth: 1,
+    borderBottomColor: '#D14343',
   },
   errorText: {
-    color: "#FF3B30",
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 8,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#D14343',
+    marginTop: -16,
+    marginBottom: 16,
+  },
+
+  // Button
+  button: {
+    backgroundColor: COLORS.brandPurple,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  buttonDisabled: {
+    backgroundColor: '#E0D8E8',
+    opacity: 0.5,
+  },
+  buttonText: {
+    fontSize: 18,
+    lineHeight: 24,
+    letterSpacing: 0.5,
+    fontWeight: '500',
+    color: COLORS.buttonText,
+  },
+
+  // Footer
+  footer: {
+    marginTop: 'auto',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.textSecondary,
+  },
+  footerLink: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
+    color: COLORS.brandPurple,
   },
 });

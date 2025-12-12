@@ -17,19 +17,38 @@ export default function useSession(): Session | null {
       try {
         const {
           data: { session },
+          error,
         } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error("No session found");
+
+        if (error) {
+          // If there's an auth error (like invalid refresh token), clear the session
+          console.log("Auth error, clearing session:", error.message);
+          setSession(null);
+          // Sign out to clear any stale tokens
+          await supabase.auth.signOut();
+          return;
         }
+
         setSession(session);
       } catch (error) {
         console.error("Error getting session:", error);
+        setSession(null);
       }
     };
 
+    // Get session on mount
+    getSession();
+
+    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (_event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
+      }
+      if (_event === 'SIGNED_OUT') {
+        console.log("User signed out");
+      }
       setSession(session);
     });
 

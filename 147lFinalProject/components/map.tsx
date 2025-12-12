@@ -5,7 +5,7 @@
  * 4. tutorials on customizing the map pins: https://blog.spirokit.com/maps-in-react-native-adding-interactive-markers
  */
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Region } from "react-native-maps";
 import * as Location from "expo-location";
@@ -15,6 +15,7 @@ import EventMarkers from "./marker";
 import supabase from "../supabase";
 import EventDetails from "./eventDetails";
 import useSession from "../utils/useSession";
+import { useFocusEffect } from "expo-router";
 
 export default function Map() {
   // Citation for location code: Lecture 5a snack - https://snack.expo.dev/@alan7cheng/cs-147l-25au---lecture-5a
@@ -38,7 +39,7 @@ export default function Map() {
       }
 
       const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced, // often enough and faster on Android
+        accuracy: Location.Accuracy.High,
       });
 
       setLocation(loc);
@@ -115,7 +116,18 @@ export default function Map() {
         }
       )
       .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
+
+  // Refresh location when tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      getLocation();
+    }, [])
+  );
 
   // Make the map refocus so that most markers appear
   useEffect(() => {

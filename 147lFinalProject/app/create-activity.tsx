@@ -16,8 +16,8 @@ import { geocodeLocation } from "../utils/geocoding";
 import { theme } from "../assets/theme";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Platform } from "react-native";
+import useSession from "../utils/useSession";
 
-const CURRENT_USER_ID = "test_user_id_A";
 const { tabColors } = theme;
 
 // Activity types matching the profile interests
@@ -118,6 +118,7 @@ const Dropdown = ({
 
 export default function CreateActivity() {
   const router = useRouter();
+  const session = useSession();
   const [activityName, setActivityName] = useState("");
   const [description, setDescription] = useState("");
   const [activityType, setActivityType] = useState("");
@@ -129,6 +130,12 @@ export default function CreateActivity() {
   const [loading, setLoading] = useState(false);
 
   const handleCreateActivity = async () => {
+    // Check authentication
+    if (!session?.user?.id) {
+      Alert.alert("Error", "You must be logged in to create an activity");
+      return;
+    }
+
     // Validation
     if (!activityName.trim()) {
       Alert.alert("Error", "Please enter an activity name");
@@ -206,7 +213,7 @@ export default function CreateActivity() {
 
       const activityData = {
         name: activityName.trim(),
-        organizer_id: CURRENT_USER_ID, // Changed from creator_id to organizer_id
+        organizer_id: session?.user?.id, // Changed from creator_id to organizer_id
       };
 
       // Only add optional fields if they exist
@@ -270,7 +277,7 @@ export default function CreateActivity() {
         .from("chat_participants")
         .insert({
           chat_id: chatData.id,
-          user_id: CURRENT_USER_ID,
+          user_id: session?.user?.id,
         });
 
       if (participantError) throw participantError;
@@ -399,22 +406,49 @@ export default function CreateActivity() {
             </Text>
           </Pressable>
 
-          {showDatePicker && (
+          {/* iOS Date Picker Modal */}
+          {Platform.OS === "ios" && showDatePicker && (
+            <Modal
+              visible={showDatePicker}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowDatePicker(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.datePickerModal}>
+                  <View style={styles.datePickerHeader}>
+                    <Pressable onPress={() => setShowDatePicker(false)}>
+                      <Text style={styles.datePickerCancel}>Cancel</Text>
+                    </Pressable>
+                    <Pressable onPress={() => setShowDatePicker(false)}>
+                      <Text style={styles.datePickerDone}>Done</Text>
+                    </Pressable>
+                  </View>
+                  <DateTimePicker
+                    value={date ?? new Date()}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setDate(selectedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Android Date Picker */}
+          {Platform.OS === "android" && showDatePicker && (
             <DateTimePicker
               value={date ?? new Date()}
               mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
+              display="default"
               onChange={(event, selectedDate) => {
-                // On Android, user can dismiss the picker
-                if (Platform.OS === "android") {
-                  setShowDatePicker(false);
-                }
-
+                setShowDatePicker(false);
                 if (selectedDate) {
                   setDate(selectedDate);
-                  if (Platform.OS === "ios") {
-                    setShowDatePicker(false);
-                  }
                 }
               }}
             />
@@ -426,11 +460,14 @@ export default function CreateActivity() {
           <Text style={styles.label}>Location or Address *</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. Stanford Shopping Center"
+            placeholder="e.g. Stanford Shopping Center, Palo Alto, CA"
             value={location}
             onChangeText={setLocation}
             maxLength={200}
           />
+          <Text style={styles.locationHint}>
+            Be specific for better results (include city/state)
+          </Text>
         </View>
 
         {/* Create Button */}
@@ -585,6 +622,29 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "600",
   },
+  datePickerModal: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  datePickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  datePickerCancel: {
+    fontSize: 16,
+    color: "#666",
+  },
+  datePickerDone: {
+    fontSize: 16,
+    color: "#007AFF",
+    fontWeight: "600",
+  },
   createButton: {
     backgroundColor: tabColors.inactiveColor,
     paddingVertical: 16,
@@ -602,5 +662,11 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  locationHint: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+    fontStyle: "italic",
   },
 });

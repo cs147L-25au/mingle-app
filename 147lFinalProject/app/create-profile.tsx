@@ -11,8 +11,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import supabase from "../supabase";
-
-const CURRENT_USER_ID = "test_user_id_A";
+import useSession from "../utils/useSession";
 
 // Common activity interests
 const ACTIVITY_OPTIONS = [
@@ -28,6 +27,7 @@ const ACTIVITY_OPTIONS = [
 
 export default function CreateProfile() {
   const router = useRouter();
+  const session = useSession();
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -42,6 +42,12 @@ export default function CreateProfile() {
   };
 
   const handleCreateProfile = async () => {
+    // Check authentication
+    if (!session?.user?.id) {
+      Alert.alert("Error", "You must be logged in to create a profile");
+      return;
+    }
+
     if (!name.trim()) {
       Alert.alert("Error", "Please enter your name");
       return;
@@ -59,7 +65,7 @@ export default function CreateProfile() {
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("user_id")
-        .eq("user_id", CURRENT_USER_ID)
+        .eq("user_id", session?.user?.id)
         .single();
 
       if (existingProfile) {
@@ -71,13 +77,13 @@ export default function CreateProfile() {
             bio: bio.trim(),
             interests: selectedInterests,
           })
-          .eq("user_id", CURRENT_USER_ID);
+          .eq("user_id", session?.user?.id);
 
         if (error) throw error;
       } else {
         // Insert new profile
         const { error } = await supabase.from("profiles").insert({
-          user_id: CURRENT_USER_ID,
+          user_id: session?.user?.id,
           name: name.trim(),
           bio: bio.trim() || "",
           interests: selectedInterests,

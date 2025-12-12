@@ -12,6 +12,7 @@ import { theme } from "../assets/theme";
 import { ImageSourcePropType } from "react-native";
 import supabase from "../supabase";
 import { useEffect, useState } from "react";
+import OrganizerProfile from "./organizerProfile";
 
 const { eventModal, tabColors } = theme;
 
@@ -44,6 +45,8 @@ export default function EventDetails({
   const [isAttending, setIsAttending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [organizerProfileVisible, setOrganizerProfileVisible] = useState(false);
+  const [organizerId, setOrganizerId] = useState<string | null>(null);
 
   // Check if the current user is already attending this event
   useEffect(() => {
@@ -90,6 +93,27 @@ export default function EventDetails({
     }
 
     setIsAttending(true);
+  };
+
+  const handleViewOrganizer = async () => {
+    if (!event) return;
+
+    // Fetch organizer_id from the event
+    const { data, error } = await supabase
+      .from("events")
+      .select("organizer_id")
+      .eq("id", event.id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching organizer:", error);
+      return;
+    }
+
+    if (data?.organizer_id) {
+      setOrganizerId(data.organizer_id);
+      setOrganizerProfileVisible(true);
+    }
   };
 
   if (!event) return null;
@@ -191,6 +215,18 @@ export default function EventDetails({
                 </View>
               )}
 
+              {/* View Organizer button */}
+              {event.activity_type !== "Home" ? (
+                <Pressable
+                  style={styles.viewOrganizerButton}
+                  onPress={handleViewOrganizer}
+                >
+                  <Text style={styles.viewOrganizerButtonText}>
+                    👤 View Organizer
+                  </Text>
+                </Pressable>
+              ) : null}
+
               {/* Attend button */}
               {event.activity_type !== "Home" ? (
                 <Pressable
@@ -216,6 +252,13 @@ export default function EventDetails({
           </ScrollView>
         </View>
       </View>
+
+      {/* Organizer Profile Modal */}
+      <OrganizerProfile
+        visible={organizerProfileVisible}
+        organizerId={organizerId}
+        onClose={() => setOrganizerProfileVisible(false)}
+      />
     </Modal>
   );
 }
@@ -359,5 +402,21 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 12,
     color: "#DC2626",
+  },
+  viewOrganizerButton: {
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 999,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#E3DFED",
+    borderWidth: 1.5,
+    borderColor: "#8174A0",
+  },
+  viewOrganizerButtonText: {
+    color: "#8174A0",
+    fontSize: 15,
+    fontWeight: "600",
   },
 });
