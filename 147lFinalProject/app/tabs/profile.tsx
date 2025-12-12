@@ -64,10 +64,18 @@ interface Activity {
   status?: "pending" | "completed";
 }
 
+interface RatingStats {
+  avgCommunication: number;
+  avgSafety: number;
+  avgOverall: number;
+  totalRatings: number;
+}
+
 export default function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [ratings, setRatings] = useState<RatingStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addMediaModalVisible, setAddMediaModalVisible] = useState(false);
@@ -153,6 +161,43 @@ export default function Profile() {
     }
   };
 
+  const fetchRatings = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      // Fetch ratings where user is the organizer
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from("organizer_ratings")
+        .select("communication_rating, safety_rating, overall_rating")
+        .eq("organizer_id", session.user.id);
+
+      if (ratingsError) {
+        console.error("Error fetching ratings:", ratingsError);
+      } else if (ratingsData && ratingsData.length > 0) {
+        const avgCommunication =
+          ratingsData.reduce((sum, r) => sum + (r.communication_rating || 0), 0) /
+          ratingsData.length;
+        const avgSafety =
+          ratingsData.reduce((sum, r) => sum + (r.safety_rating || 0), 0) /
+          ratingsData.length;
+        const avgOverall =
+          ratingsData.reduce((sum, r) => sum + (r.overall_rating || 0), 0) /
+          ratingsData.length;
+
+        setRatings({
+          avgCommunication: Math.round(avgCommunication * 10) / 10,
+          avgSafety: Math.round(avgSafety * 10) / 10,
+          avgOverall: Math.round(avgOverall * 10) / 10,
+          totalRatings: ratingsData.length,
+        });
+      } else {
+        setRatings(null);
+      }
+    } catch (error) {
+      console.error("Error fetching ratings:", error);
+    }
+  };
+
   const fetchActivities = async () => {
     if (!session?.user?.id) return;
 
@@ -214,8 +259,19 @@ export default function Profile() {
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([fetchProfile(), fetchMedia(), fetchActivities()]);
+    await Promise.all([fetchProfile(), fetchMedia(), fetchActivities(), fetchRatings()]);
     setLoading(false);
+  };
+
+  // Helper to check if activity date is today or in the future
+  const isUpcoming = (activity: Activity): boolean => {
+    if (!activity.event_date) return true; // If no date, show it
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const today = `${year}-${month}-${day}`;
+    return activity.event_date >= today;
   };
 
   useEffect(() => {
@@ -657,6 +713,49 @@ export default function Profile() {
           ))}
         </View>
 
+        {/* Organizer Ratings */}
+        {ratings && ratings.totalRatings > 0 && (
+          <View style={styles.ratingsSection}>
+            <Text style={styles.ratingsSectionTitle}>My Organizer Rating</Text>
+            <Text style={styles.ratingsCount}>
+              Based on {ratings.totalRatings} rating{ratings.totalRatings !== 1 ? "s" : ""}
+            </Text>
+
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>Communication</Text>
+              <View style={styles.ratingValueContainer}>
+                <Text style={styles.ratingStars}>
+                  {"★".repeat(Math.round(ratings.avgCommunication))}
+                  {"☆".repeat(5 - Math.round(ratings.avgCommunication))}
+                </Text>
+                <Text style={styles.ratingValue}>{ratings.avgCommunication.toFixed(1)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>Safety</Text>
+              <View style={styles.ratingValueContainer}>
+                <Text style={styles.ratingStars}>
+                  {"★".repeat(Math.round(ratings.avgSafety))}
+                  {"☆".repeat(5 - Math.round(ratings.avgSafety))}
+                </Text>
+                <Text style={styles.ratingValue}>{ratings.avgSafety.toFixed(1)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>Overall</Text>
+              <View style={styles.ratingValueContainer}>
+                <Text style={styles.ratingStars}>
+                  {"★".repeat(Math.round(ratings.avgOverall))}
+                  {"☆".repeat(5 - Math.round(ratings.avgOverall))}
+                </Text>
+                <Text style={styles.ratingValue}>{ratings.avgOverall.toFixed(1)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         <Pressable
           style={styles.editButton}
           onPress={() => setEditModalVisible(true)}
@@ -683,13 +782,13 @@ export default function Profile() {
         <View style={styles.activitySubSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Pending Activities</Text>
-            {activities.filter((a) => a.status !== "completed").length > 0 && (
+            {activities.filter((a) => a.status !== "completed" && isUpcoming(a)).length > 0 && (
               <Text style={styles.activityCount}>
-                {activities.filter((a) => a.status !== "completed").length}
+                {activities.filter((a) => a.status !== "completed" && isUpcoming(a)).length}
               </Text>
             )}
           </View>
-          {activities.filter((a) => a.status !== "completed").length === 0 ? (
+          {activities.filter((a) => a.status !== "completed" && isUpcoming(a)).length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>
                 No pending activities. Create one from the Map tab!
@@ -702,7 +801,7 @@ export default function Profile() {
               contentContainerStyle={styles.activityScrollContent}
             >
               {activities
-                .filter((a) => a.status !== "completed")
+                .filter((a) => a.status !== "completed" && isUpcoming(a))
                 .map((activity, index) => (
                   <View
                     key={activity.id}
@@ -1203,6 +1302,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.brandPurple,
     fontWeight: "500",
+  },
+  ratingsSection: {
+    width: "100%",
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+  },
+  ratingsSectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  ratingsCount: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  ratingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.inputBorder,
+  },
+  ratingLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  ratingValueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  ratingStars: {
+    fontSize: 16,
+    color: COLORS.brandPurple,
+  },
+  ratingValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    minWidth: 30,
   },
   editButton: {
     paddingHorizontal: 24,
