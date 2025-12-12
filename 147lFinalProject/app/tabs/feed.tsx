@@ -100,7 +100,22 @@ export default function Feed() {
       )
       .subscribe();
 
-    return () => supabase.removeChannel(likesChannel);
+    const postsChannel = supabase
+      .channel("user-media-changes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "user_media" },
+        (payload) => {
+          console.log("New post added:", payload.new);
+          fetchPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(likesChannel);
+      supabase.removeChannel(postsChannel);
+    };
   }, [userId]);
 
   const toggleLike = async (postId: string) => {
