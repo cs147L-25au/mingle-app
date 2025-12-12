@@ -10,6 +10,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import supabase from "../../../supabase";
 import { useEffect, useState, useCallback } from "react";
 import { theme } from "../../../assets/theme";
+import { Ionicons } from "@expo/vector-icons";
 
 interface ChatListItem {
   chat_id: string;
@@ -219,7 +220,7 @@ export default function Messages() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#8174A0" />
       </View>
     );
   }
@@ -235,17 +236,18 @@ export default function Messages() {
         contentContainerStyle={styles.flatListContent}
         renderItem={({ item }) => (
           <Pressable
-            style={[
-              styles.messageBox,
-              { backgroundColor: theme.tabColors.inactiveColor },
-            ]}
+            style={styles.messageBox}
             onPress={() => router.push(`../../chat/${item.chat_id}`)}
           >
             <View style={styles.boxContent}>
-              <Text style={styles.emojiText}>💬</Text>
+              <View style={styles.iconCircle}>
+                <Ionicons name="chatbubbles" size={24} color={COLORS.white} />
+              </View>
               <View style={styles.textArea}>
                 <Text style={styles.groupNameText}>{item.event_name}</Text>
-                <Text style={styles.messageText}> {item.last_chat}</Text>
+                <Text style={styles.messageText} numberOfLines={1}>
+                  {item.last_chat}
+                </Text>
               </View>
             </View>
           </Pressable>
@@ -255,55 +257,75 @@ export default function Messages() {
   );
 }
 
+const COLORS = {
+  background: '#FAF8FC',
+  brandPurple: '#8174A0',
+  brandPink: '#C599B6',
+  textPrimary: '#2D2438',
+  textSecondary: '#6B6078',
+  textTertiary: '#9B8FA8',
+  white: '#FFFFFF',
+  cardBg: '#FFFFFF',
+  border: '#E0D8E8',
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-start",
+    backgroundColor: COLORS.background,
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    paddingBottom: 20,
+    paddingHorizontal: 24,
+    backgroundColor: COLORS.background,
   },
   flatListContent: {
-    paddingVertical: 5,
-    gap: 10,
-    paddingHorizontal: 5,
-    flexGrow: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    gap: 12,
   },
   messageBox: {
-    flex: 0.15,
-    backgroundColor: "#cdefffff",
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    //borderRadius: "8%",
-    paddingVertical: 20,
-    // borderWidth: 3,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    shadowColor: COLORS.brandPurple,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   boxContent: {
     flexDirection: "row",
-    marginLeft: "4%",
-    gap: 10,
+    alignItems: "center",
+    gap: 16,
   },
   groupNameText: {
     fontSize: 20,
-    fontWeight: "bold",
-    // fontFamily: "Poppins-Bold",
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    letterSpacing: -0.3,
   },
   messageText: {
     fontSize: 15,
-    // fontFamily: "Poppins-Regular",
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+    marginTop: 4,
   },
   textArea: {
-    flexDirection: "column",
-    gap: 5,
+    flex: 1,
+    gap: 4,
   },
-  emojiText: {
-    fontSize: 40,
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.brandPurple,
+    justifyContent: "center",
+    alignItems: "center",
   },
   center: {
     justifyContent: "center",

@@ -249,8 +249,8 @@ export default function ChatRoom() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={{ marginTop: 10 }}>Loading chat messages...</Text>
+        <ActivityIndicator size="large" color="#8174A0" />
+        <Text style={{ marginTop: 10, color: "#6B6078" }}>Loading chat messages...</Text>
       </View>
     );
   }
@@ -267,12 +267,12 @@ export default function ChatRoom() {
         ]}
       >
         <Pressable
-          style={styles.chatTitle}
+          style={styles.backButton}
           onPress={() => router.navigate("/tabs/messages")}
         >
-          <Text style={styles.backText}>{"<"}</Text>
+          <Text style={styles.backText}>←</Text>
         </Pressable>
-        <View style={styles.chatTitle}>
+        <View style={styles.headerContent}>
           <Text style={styles.titleText}>{groupName}</Text>
           <Text style={styles.memberCountText}>{memberCount} member(s)</Text>
         </View>
@@ -337,25 +337,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fffdf0ff",
   },
-  chatTitle: {
-    justifyContent: "center",
-    marginLeft: "3%",
+  header: {
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  titleText: {
-    fontSize: 30,
-    fontWeight: "bold",
-    //  fontFamily: "Poppins-Bold",
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   backText: {
-    fontWeight: "bold",
-    fontSize: 30,
-    fontFamily: "Poppins-Bold",
+    fontSize: 24,
+    fontWeight: "600",
+    color: "#fff",
   },
-  header: {
-    flex: 0.14,
-    paddingTop: 20,
-    flexDirection: "row",
-    borderRadius: 8,
+  headerContent: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  titleText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
   },
   messagesView: {
     flex: 1,
@@ -426,11 +436,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   memberCountText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    // fontFamily: "Poppins-Bold",
-    color: "#f3f3f3ff",
-    marginTop: -5,
+    fontSize: 13,
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.8)",
+    marginTop: 2,
   },
   senderNameText: {
     fontSize: 10,

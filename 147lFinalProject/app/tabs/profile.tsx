@@ -62,6 +62,7 @@ interface Activity {
   location: string;
   created_at: string;
   status?: "pending" | "completed";
+  attendee_count?: number;
 }
 
 interface RatingStats {
@@ -251,7 +252,26 @@ export default function Profile() {
         return 0;
       });
 
-      setActivities(sortedData as Activity[]);
+      // Fetch attendee counts for each activity
+      const activitiesWithCounts = await Promise.all(
+        sortedData.map(async (activity) => {
+          const { count, error } = await supabase
+            .from("event_attendees")
+            .select("*", { count: "exact", head: true })
+            .eq("event_id", activity.id);
+
+          if (error) {
+            console.error("Error fetching attendee count:", error);
+          }
+
+          return {
+            ...activity,
+            attendee_count: count || 0,
+          };
+        })
+      );
+
+      setActivities(activitiesWithCounts as Activity[]);
     } catch (error) {
       console.error("Error fetching activities:", error);
     }
@@ -840,6 +860,12 @@ export default function Profile() {
                           {activity.price_range}
                         </Text>
                       </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>👥</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.attendee_count || 0} {activity.attendee_count === 1 ? 'person' : 'people'} joined
+                        </Text>
+                      </View>
                     </View>
 
                     {/* Complete button */}
@@ -924,6 +950,12 @@ export default function Profile() {
                         <Text style={styles.activityIcon}>💰</Text>
                         <Text style={styles.activityDetailText}>
                           {activity.price_range}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>👥</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.attendee_count || 0} {activity.attendee_count === 1 ? 'person' : 'people'} joined
                         </Text>
                       </View>
                     </View>

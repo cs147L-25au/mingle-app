@@ -353,7 +353,7 @@ export default function CreateActivity() {
         chat_id: chatData.id,
         user_id: session?.user?.id,
         type: "system",
-        content: `${userName} created the activity`,
+        content: `${userName} created the group`,
       });
 
       console.log("Chat room created and creator added!");
