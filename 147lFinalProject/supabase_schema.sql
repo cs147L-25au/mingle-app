@@ -116,3 +116,41 @@ CREATE INDEX IF NOT EXISTS idx_events_creator_id ON events(creator_id);
 CREATE INDEX IF NOT EXISTS idx_events_created_at ON events(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_events_activity_type ON events(activity_type);
 CREATE INDEX IF NOT EXISTS idx_events_location ON events(location);
+
+-- Event Attendees Table
+-- Tracks which users are attending which events
+CREATE TABLE IF NOT EXISTS event_attendees (
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL,
+    completed BOOLEAN DEFAULT FALSE,
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (event_id, user_id)
+);
+
+-- Enable Row Level Security
+ALTER TABLE event_attendees ENABLE ROW LEVEL SECURITY;
+
+-- Create policy to allow everyone to read attendees
+CREATE POLICY "Event attendees are viewable by everyone"
+    ON event_attendees FOR SELECT
+    USING (true);
+
+-- Create policy to allow users to join events
+CREATE POLICY "Users can join events"
+    ON event_attendees FOR INSERT
+    WITH CHECK (true);
+
+-- Create policy to allow users to update their own attendance
+CREATE POLICY "Users can update their own attendance"
+    ON event_attendees FOR UPDATE
+    USING (true);
+
+-- Create policy to allow users to leave events
+CREATE POLICY "Users can leave events"
+    ON event_attendees FOR DELETE
+    USING (true);
+
+-- Create indexes for event_attendees
+CREATE INDEX IF NOT EXISTS idx_event_attendees_event_id ON event_attendees(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_attendees_user_id ON event_attendees(user_id);
+CREATE INDEX IF NOT EXISTS idx_event_attendees_completed ON event_attendees(completed);

@@ -63,6 +63,8 @@ interface Activity {
   created_at: string;
   status?: "pending" | "completed";
   attendee_count?: number;
+  attendee_completed?: boolean; // For tracking if current user completed this as an attendee
+  organizer_id?: string; // To check if current user is the organizer
 }
 
 interface RatingStats {
@@ -213,15 +215,20 @@ export default function Profile() {
         console.error("Error fetching organized events:", organizedError);
       }
 
-      // Fetch events where user is attending
+      // Fetch events where user is attending (with completion status)
       const { data: attendeeData, error: attendeeError } = await supabase
         .from("event_attendees")
-        .select("event_id")
+        .select("event_id, completed")
         .eq("user_id", session.user.id);
 
       if (attendeeError) {
         console.error("Error fetching attended events:", attendeeError);
       }
+
+      // Create a map of event_id to completion status
+      const completionMap = new Map(
+        (attendeeData || []).map((a) => [a.event_id, a.completed])
+      );
 
       // Get the full event details for attended events
       let attendedEvents: Activity[] = [];
@@ -252,7 +259,7 @@ export default function Profile() {
         return 0;
       });
 
-      // Fetch attendee counts for each activity
+      // Fetch attendee counts and add completion status for each activity
       const activitiesWithCounts = await Promise.all(
         sortedData.map(async (activity) => {
           const { count, error } = await supabase
@@ -264,9 +271,13 @@ export default function Profile() {
             console.error("Error fetching attendee count:", error);
           }
 
+          // Check if user completed this activity as an attendee
+          const attendeeCompleted = completionMap.get(activity.id) || false;
+
           return {
             ...activity,
             attendee_count: count || 0,
+            attendee_completed: attendeeCompleted,
           };
         })
       );
@@ -292,6 +303,19 @@ export default function Profile() {
     const day = String(now.getDate()).padStart(2, "0");
     const today = `${year}-${month}-${day}`;
     return activity.event_date >= today;
+  };
+
+  // Helper to check if activity is completed for the current user
+  const isActivityCompleted = (activity: Activity): boolean => {
+    // If user is the organizer and event status is completed
+    if (activity.organizer_id === session?.user?.id && activity.status === "completed") {
+      return true;
+    }
+    // If user is an attendee and marked it as completed
+    if (activity.attendee_completed) {
+      return true;
+    }
+    return false;
   };
 
   useEffect(() => {
@@ -497,6 +521,8 @@ export default function Profile() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log("Deleting media with ID:", mediaId);
+
               // Extract file path from URL
               const urlParts = mediaUrl.split("/storage/v1/object/public/user-images/");
               if (urlParts.length > 1) {
@@ -513,15 +539,37 @@ export default function Profile() {
               }
 
               // Delete from database
-              const { error: dbError } = await supabase
+              const { data: deleteData, error: dbError } = await supabase
                 .from("user_media")
                 .delete()
-                .eq("id", mediaId);
+                .eq("id", mediaId)
+                .select();
 
-              if (dbError) throw dbError;
+              if (dbError) {
+                console.error("Database deletion error:", dbError);
+                throw dbError;
+              }
+
+              console.log("Delete operation result:", deleteData);
+
+              // Verify deletion by trying to fetch the record
+              const { data: checkData, error: checkError } = await supabase
+                .from("user_media")
+                .select("id")
+                .eq("id", mediaId)
+                .maybeSingle();
+
+              if (checkData) {
+                console.error("Photo still exists in database after deletion!");
+                throw new Error("Photo was not deleted from database");
+              }
+
+              console.log("Verified: Photo deleted successfully from database");
+
+              // Immediately update local state to remove the item
+              setMedia(currentMedia => currentMedia.filter(item => item.id !== mediaId));
 
               Alert.alert("Success", "Photo deleted successfully!");
-              fetchMedia();
             } catch (error) {
               console.error("Error deleting media:", error);
               Alert.alert("Error", "Failed to delete photo");
@@ -613,14 +661,14 @@ export default function Profile() {
         }
       }
 
-      // For non-organizers, just remove them from attendees (don't change event status)
-      const { error: removeError } = await supabase
+      // For non-organizers, mark their attendance as completed
+      const { error: updateError } = await supabase
         .from("event_attendees")
-        .delete()
+        .update({ completed: true })
         .eq("event_id", activityToRate.id)
         .eq("user_id", session.user.id);
 
-      if (removeError) throw removeError;
+      if (updateError) throw updateError;
 
       // Reset modal state
       setRatingModalVisible(false);
@@ -642,10 +690,10 @@ export default function Profile() {
     if (!activityToRate || !session?.user?.id) return;
 
     try {
-      // For non-organizers, just remove them from attendees (don't change event status)
+      // For non-organizers, mark their attendance as completed
       const { error } = await supabase
         .from("event_attendees")
-        .delete()
+        .update({ completed: true })
         .eq("event_id", activityToRate.id)
         .eq("user_id", session.user.id);
 
@@ -666,14 +714,29 @@ export default function Profile() {
     }
   };
 
-  const handleUncompleteActivity = async (activityId: string) => {
-    try {
-      const { error } = await supabase
-        .from("events")
-        .update({ status: "pending" })
-        .eq("id", activityId);
+  const handleUncompleteActivity = async (activity: Activity) => {
+    if (!session?.user?.id) return;
 
-      if (error) throw error;
+    try {
+      // Check if user is the organizer
+      if (activity.organizer_id === session.user.id) {
+        // Organizer: update event status
+        const { error } = await supabase
+          .from("events")
+          .update({ status: "pending" })
+          .eq("id", activity.id);
+
+        if (error) throw error;
+      } else {
+        // Attendee: update their completed status
+        const { error } = await supabase
+          .from("event_attendees")
+          .update({ completed: false })
+          .eq("event_id", activity.id)
+          .eq("user_id", session.user.id);
+
+        if (error) throw error;
+      }
 
       fetchActivities();
     } catch (error) {
@@ -707,6 +770,19 @@ export default function Profile() {
         >
           <Text style={styles.buttonText}>Create Profile</Text>
         </Pressable>
+
+        {/* Sign Out Option */}
+        <View style={styles.noProfileSignOutSection}>
+          <Text style={styles.noProfileEmail}>
+            Logged in as: {session.user.email}
+          </Text>
+          <Pressable
+            style={styles.signOutButton}
+            onPress={signOut}
+          >
+            <Text style={styles.signOutButtonText}>Sign Out</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -802,13 +878,13 @@ export default function Profile() {
         <View style={styles.activitySubSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Pending Activities</Text>
-            {activities.filter((a) => a.status !== "completed" && isUpcoming(a)).length > 0 && (
+            {activities.filter((a) => !isActivityCompleted(a) && isUpcoming(a)).length > 0 && (
               <Text style={styles.activityCount}>
-                {activities.filter((a) => a.status !== "completed" && isUpcoming(a)).length}
+                {activities.filter((a) => !isActivityCompleted(a) && isUpcoming(a)).length}
               </Text>
             )}
           </View>
-          {activities.filter((a) => a.status !== "completed" && isUpcoming(a)).length === 0 ? (
+          {activities.filter((a) => !isActivityCompleted(a) && isUpcoming(a)).length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>
                 No pending activities. Create one from the Map tab!
@@ -821,7 +897,7 @@ export default function Profile() {
               contentContainerStyle={styles.activityScrollContent}
             >
               {activities
-                .filter((a) => a.status !== "completed" && isUpcoming(a))
+                .filter((a) => !isActivityCompleted(a) && isUpcoming(a))
                 .map((activity, index) => (
                   <View
                     key={activity.id}
@@ -888,13 +964,13 @@ export default function Profile() {
         <View style={styles.activitySubSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Completed Activities</Text>
-            {activities.filter((a) => a.status === "completed").length > 0 && (
+            {activities.filter((a) => isActivityCompleted(a)).length > 0 && (
               <Text style={styles.activityCount}>
-                {activities.filter((a) => a.status === "completed").length}
+                {activities.filter((a) => isActivityCompleted(a)).length}
               </Text>
             )}
           </View>
-          {activities.filter((a) => a.status === "completed").length === 0 ? (
+          {activities.filter((a) => isActivityCompleted(a)).length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>
                 No completed activities yet.
@@ -907,7 +983,7 @@ export default function Profile() {
               contentContainerStyle={styles.activityScrollContent}
             >
               {activities
-                .filter((a) => a.status === "completed")
+                .filter((a) => isActivityCompleted(a))
                 .map((activity, index) => (
                   <View
                     key={activity.id}
@@ -966,7 +1042,7 @@ export default function Profile() {
                         styles.uncompleteButton,
                         pressed && styles.uncompleteButtonPressed,
                       ]}
-                      onPress={() => handleUncompleteActivity(activity.id)}
+                      onPress={() => handleUncompleteActivity(activity)}
                     >
                       <Text style={styles.uncompleteButtonText}>↻ Mark as Pending</Text>
                     </Pressable>
@@ -1410,6 +1486,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
     marginBottom: 24,
+  },
+  noProfileSignOutSection: {
+    marginTop: 40,
+    alignItems: "center",
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.inputBorder,
+    width: "80%",
+  },
+  noProfileEmail: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
+  },
+  signOutButton: {
+    backgroundColor: "transparent",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: COLORS.brandPurple,
+  },
+  signOutButtonText: {
+    color: COLORS.brandPurple,
+    fontSize: 14,
+    fontWeight: "600",
   },
   button: {
     backgroundColor: COLORS.brandPurple,

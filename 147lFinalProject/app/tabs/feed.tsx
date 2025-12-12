@@ -104,9 +104,9 @@ export default function Feed() {
       .channel("user-media-changes")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "user_media" },
+        { event: "*", schema: "public", table: "user_media" },
         (payload) => {
-          console.log("New post added:", payload.new);
+          console.log("Post change detected:", payload);
           fetchPosts();
         }
       )
