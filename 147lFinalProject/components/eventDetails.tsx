@@ -6,10 +6,12 @@ import {
   Pressable,
   ScrollView,
   Image,
+  Alert,
 } from "react-native";
 import { Event, ActivityType } from "../utils/types";
 import { theme } from "../assets/theme";
 import { ImageSourcePropType } from "react-native";
+import { useRouter } from "expo-router";
 import supabase from "../supabase";
 import { useEffect, useState } from "react";
 import OrganizerProfile from "./organizerProfile";
@@ -42,6 +44,7 @@ export default function EventDetails({
   onClose,
   currentUserId,
 }: EventDetailsProps) {
+  const router = useRouter();
   const [isAttending, setIsAttending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,6 +75,34 @@ export default function EventDetails({
 
   const handleAttendPress = async () => {
     if (!event || !currentUserId) return;
+
+    // Check if user has a profile first
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", currentUserId)
+      .single();
+
+    if (profileError || !profileData) {
+      Alert.alert(
+        "Profile Required",
+        "You need to create a profile before joining activities.",
+        [
+          {
+            text: "Create Profile",
+            onPress: () => {
+              onClose(); // Close the event details modal
+              router.push("/create-profile");
+            },
+          },
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+        ]
+      );
+      return;
+    }
 
     setLoading(true);
     setErrorMsg(null);

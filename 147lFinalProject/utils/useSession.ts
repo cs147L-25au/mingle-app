@@ -22,17 +22,20 @@ export default function useSession(): Session | null {
 
         if (error) {
           // If there's an auth error (like invalid refresh token), clear the session
-          console.log("Auth error, clearing session:", error.message);
+          // This is normal after app restarts with expired tokens
+          console.log("Session expired or invalid, signing out");
           setSession(null);
-          // Sign out to clear any stale tokens
-          await supabase.auth.signOut();
+          // Sign out to clear any stale tokens - use silent signOut
+          await supabase.auth.signOut({ scope: 'local' });
           return;
         }
 
         setSession(session);
       } catch (error) {
-        console.error("Error getting session:", error);
+        // Silently handle session errors and clear auth state
+        console.log("Unable to restore session, starting fresh");
         setSession(null);
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
       }
     };
 

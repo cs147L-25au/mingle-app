@@ -95,7 +95,7 @@ export default function CreateProfile() {
       Alert.alert("Success", "Profile created successfully!", [
         {
           text: "OK",
-          onPress: () => router.replace("/(tabs)/profile"),
+          onPress: () => router.replace("/tabs/profile"),
         },
       ]);
     } catch (error: any) {
@@ -120,6 +120,14 @@ export default function CreateProfile() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
+        {/* Back Button */}
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.backButtonText}>← Back</Text>
+        </Pressable>
+
         <Text style={styles.title}>Create Your Profile</Text>
         <Text style={styles.subtitle}>
           Let others know who you are and what you enjoy!
@@ -134,6 +142,9 @@ export default function CreateProfile() {
             value={name}
             onChangeText={setName}
             maxLength={50}
+            autoComplete="off"
+            textContentType="none"
+            autoCorrect={false}
           />
         </View>
 
@@ -148,6 +159,9 @@ export default function CreateProfile() {
             multiline
             numberOfLines={4}
             maxLength={200}
+            autoComplete="off"
+            textContentType="none"
+            autoCorrect={false}
           />
           <Text style={styles.charCount}>{bio.length}/200</Text>
         </View>
@@ -200,57 +214,86 @@ export default function CreateProfile() {
   );
 }
 
+// Mingle Brand Colors
+const COLORS = {
+  background: '#FAF8FC',
+  brandPurple: '#8174A0',
+  brandPink: '#C599B6',
+  textPrimary: '#2D2438',
+  textSecondary: '#6B6078',
+  textTertiary: '#9B8FA8',
+  inputBorder: '#E0D8E8',
+  lightPurple: '#E3DFED',
+  white: '#FFFFFF',
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.background,
   },
   content: {
-    padding: 20,
+    padding: 28,
     paddingTop: 60,
   },
+  backButton: {
+    alignSelf: "flex-start",
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  backButtonText: {
+    fontSize: 17,
+    color: COLORS.brandPurple,
+    fontWeight: "600",
+  },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: "bold",
     marginBottom: 8,
-    color: "#000",
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 30,
+    fontSize: 17,
+    color: COLORS.textSecondary,
+    marginBottom: 32,
+    lineHeight: 24,
   },
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   label: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    marginBottom: 8,
-    color: "#000",
+    marginBottom: 10,
+    color: COLORS.textPrimary,
+    letterSpacing: 0.2,
   },
   helperText: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 12,
+    lineHeight: 20,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.inputBorder,
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: COLORS.white,
+    color: COLORS.textPrimary,
   },
   bioInput: {
     height: 100,
     textAlignVertical: "top",
   },
   charCount: {
-    fontSize: 12,
-    color: "#999",
+    fontSize: 13,
+    color: COLORS.textTertiary,
     textAlign: "right",
-    marginTop: 4,
+    marginTop: 6,
   },
   interestsContainer: {
     flexDirection: "row",
@@ -258,37 +301,46 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   interestChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#007AFF",
-    backgroundColor: "#fff",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: COLORS.brandPurple,
+    backgroundColor: COLORS.white,
   },
   interestChipSelected: {
-    backgroundColor: "#007AFF",
+    backgroundColor: COLORS.brandPurple,
+    borderColor: COLORS.brandPurple,
   },
   interestChipText: {
     fontSize: 14,
-    color: "#007AFF",
+    color: COLORS.brandPurple,
+    fontWeight: "500",
   },
   interestChipTextSelected: {
-    color: "#fff",
+    color: COLORS.white,
+    fontWeight: "600",
   },
   button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 16,
-    borderRadius: 8,
+    backgroundColor: COLORS.brandPurple,
+    paddingVertical: 18,
+    borderRadius: 28,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 12,
     marginBottom: 40,
+    shadowColor: COLORS.brandPurple,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
   buttonText: {
-    color: "#fff",
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: "600",
+    letterSpacing: 0.5,
   },
 });
