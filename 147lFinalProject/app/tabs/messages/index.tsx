@@ -138,7 +138,9 @@ export default function Messages() {
 
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
+
+    // --- 1. Listen for new messages ---
+    const messageChannel = supabase
       .channel("chat-list-updates")
       .on(
         "postgres_changes",
@@ -147,7 +149,6 @@ export default function Messages() {
           const newMessage = payload.new;
           setChats((prev) => {
             const updated = prev.map((chat) => {
-              console.log(chat);
               if (chat.chat_id === newMessage.chat_id) {
                 return {
                   ...chat,
@@ -168,7 +169,8 @@ export default function Messages() {
       )
       .subscribe();
 
-    const participationChannel = supabase
+    // --- 2. Listen for new chat participants ---
+    const participantChannel = supabase
       .channel("chat-list-participation")
       .on(
         "postgres_changes",
@@ -179,17 +181,41 @@ export default function Messages() {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          console.log("Joined new chat! Refreshing list...");
-          fetchUserChats();
+          fetchUserChats(); // refresh chats when user joins new chat
         }
       )
       .subscribe();
 
+    // --- 3. Listen for event status updates ---
+    const eventStatusChannel = supabase
+      .channel("chat-event-status-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "events",
+        },
+        (payload) => {
+          const updatedEvent = payload.new;
+          if (updatedEvent.status === "completed") {
+            // Remove any chat linked to this event
+            setChats((prev) =>
+              prev.filter((chat) => chat.chat_id !== updatedEvent.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
     return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(participationChannel);
+      supabase.removeChannel(messageChannel);
+      supabase.removeChannel(participantChannel);
+      supabase.removeChannel(eventStatusChannel);
     };
   }, [userId]);
+
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
