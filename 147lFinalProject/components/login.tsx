@@ -12,6 +12,7 @@ import {
   Image,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
 import supabase from "../supabase";
 
 // Mingle Brand Colors
@@ -28,6 +29,7 @@ const COLORS = {
 };
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,13 +83,9 @@ export default function Login() {
         return;
       }
 
-      Alert.alert(
-        "Success!",
-        "Account created successfully. You can now sign in.",
-        [{ text: "OK" }]
-      );
-
+      // After successful signup, navigate to create profile
       setLoading(false);
+      router.push("/create-profile");
     } catch (err) {
       console.error("Sign up error:", err);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");

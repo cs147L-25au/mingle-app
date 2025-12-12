@@ -72,7 +72,14 @@ export default function OrganizerProfile({
         .single();
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError);
+        // PGRST116 means no rows returned (profile doesn't exist)
+        if (profileError.code === "PGRST116") {
+          console.log("No profile found for this organizer");
+          setProfile(null);
+        } else {
+          console.error("Error fetching profile:", profileError);
+          setProfile(null);
+        }
       } else {
         setProfile(profileData as Profile);
       }
@@ -240,7 +247,10 @@ export default function OrganizerProfile({
               ) : (
                 <View style={styles.errorContainer}>
                   <Text style={styles.errorText}>
-                    Unable to load organizer profile
+                    This organizer hasn't created a profile yet
+                  </Text>
+                  <Text style={styles.errorSubtext}>
+                    They need to set up their profile before details can be shown
                   </Text>
                 </View>
               )}
@@ -397,6 +407,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 14,
     color: COLORS.textSecondary,
     textAlign: "center",
   },

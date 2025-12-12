@@ -73,6 +73,7 @@ export default function Map() {
         .from("events")
         .select("*")
         .gte("event_date", today)
+        .neq("status", "completed")
         .order("event_date", { ascending: true });
 
       setDbEvents(data ?? []);

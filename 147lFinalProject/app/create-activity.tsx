@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import supabase from "../supabase";
 import { geocodeLocation } from "../utils/geocoding";
@@ -128,11 +128,68 @@ export default function CreateActivity() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+
+  // Check if user has a profile
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!session?.user?.id) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("Error checking profile:", error);
+        return;
+      }
+
+      setHasProfile(!!data);
+
+      // If no profile, show alert and redirect
+      if (!data) {
+        Alert.alert(
+          "Profile Required",
+          "You need to create a profile before creating activities.",
+          [
+            {
+              text: "Create Profile",
+              onPress: () => router.push("/create-profile"),
+            },
+            {
+              text: "Cancel",
+              onPress: () => router.back(),
+              style: "cancel",
+            },
+          ]
+        );
+      }
+    };
+
+    checkProfile();
+  }, [session?.user?.id]);
 
   const handleCreateActivity = async () => {
     // Check authentication
     if (!session?.user?.id) {
       Alert.alert("Error", "You must be logged in to create an activity");
+      return;
+    }
+
+    // Check profile
+    if (!hasProfile) {
+      Alert.alert(
+        "Profile Required",
+        "Please create a profile before creating activities.",
+        [
+          {
+            text: "Create Profile",
+            onPress: () => router.push("/create-profile"),
+          },
+        ]
+      );
       return;
     }
 
@@ -283,6 +340,21 @@ export default function CreateActivity() {
       if (participantError) throw participantError;
 
       console.log("Chat room created and creator added!");
+
+      // Auto-add organizer as an attendee
+      const { error: attendeeError } = await supabase
+        .from("event_attendees")
+        .insert({
+          event_id: data.id,
+          user_id: session?.user?.id,
+        });
+
+      if (attendeeError) {
+        console.error("Error adding organizer as attendee:", attendeeError);
+        // Continue even if this fails
+      } else {
+        console.log("Organizer automatically added as attendee");
+      }
 
       console.log("Activity created successfully:", data);
 

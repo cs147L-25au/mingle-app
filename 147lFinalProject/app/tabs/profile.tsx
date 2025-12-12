@@ -221,6 +221,9 @@ export default function Profile() {
   useEffect(() => {
     if (session?.user?.id) {
       loadData();
+    } else {
+      // If no session, set loading to false to show the Loading component
+      setLoading(false);
     }
   }, [session?.user?.id]);
 
@@ -454,9 +457,39 @@ export default function Profile() {
   };
 
   const handleCompleteActivity = async (activity: Activity) => {
-    // Open rating modal for the organizer
-    setActivityToRate(activity);
-    setRatingModalVisible(true);
+    if (!session?.user?.id) return;
+
+    try {
+      // Get organizer_id from the activity
+      const { data: eventData, error: eventError } = await supabase
+        .from("events")
+        .select("organizer_id")
+        .eq("id", activity.id)
+        .single();
+
+      if (eventError) throw eventError;
+
+      // If user is the organizer, skip rating and just complete
+      if (eventData.organizer_id === session.user.id) {
+        const { error } = await supabase
+          .from("events")
+          .update({ status: "completed" })
+          .eq("id", activity.id);
+
+        if (error) throw error;
+
+        fetchActivities();
+        Alert.alert("Success", "Activity marked as complete!");
+        return;
+      }
+
+      // Otherwise, open rating modal for non-organizers
+      setActivityToRate(activity);
+      setRatingModalVisible(true);
+    } catch (error) {
+      console.error("Error checking organizer:", error);
+      Alert.alert("Error", "Failed to complete activity");
+    }
   };
 
   const submitRatingAndComplete = async () => {
@@ -480,18 +513,23 @@ export default function Profile() {
 
       // Only submit rating if user is not the organizer
       if (eventData.organizer_id !== session.user.id) {
-        // Submit rating
+        // Submit rating (upsert to handle re-rating the same event)
         const { error: ratingError } = await supabase
           .from("organizer_ratings")
-          .insert({
-            event_id: activityToRate.id,
-            organizer_id: eventData.organizer_id,
-            rater_id: session.user.id,
-            communication_rating: communicationRating,
-            safety_rating: safetyRating,
-            overall_rating: overallRating,
-            comment: ratingComment.trim() || null,
-          });
+          .upsert(
+            {
+              event_id: activityToRate.id,
+              organizer_id: eventData.organizer_id,
+              rater_id: session.user.id,
+              communication_rating: communicationRating,
+              safety_rating: safetyRating,
+              overall_rating: overallRating,
+              comment: ratingComment.trim() || null,
+            },
+            {
+              onConflict: "event_id,rater_id",
+            }
+          );
 
         if (ratingError) {
           console.error("Rating error:", ratingError);
@@ -499,13 +537,14 @@ export default function Profile() {
         }
       }
 
-      // Mark activity as completed
-      const { error: completeError } = await supabase
-        .from("events")
-        .update({ status: "completed" })
-        .eq("id", activityToRate.id);
+      // For non-organizers, just remove them from attendees (don't change event status)
+      const { error: removeError } = await supabase
+        .from("event_attendees")
+        .delete()
+        .eq("event_id", activityToRate.id)
+        .eq("user_id", session.user.id);
 
-      if (completeError) throw completeError;
+      if (removeError) throw removeError;
 
       // Reset modal state
       setRatingModalVisible(false);
@@ -524,13 +563,15 @@ export default function Profile() {
   };
 
   const skipRatingAndComplete = async () => {
-    if (!activityToRate) return;
+    if (!activityToRate || !session?.user?.id) return;
 
     try {
+      // For non-organizers, just remove them from attendees (don't change event status)
       const { error } = await supabase
-        .from("events")
-        .update({ status: "completed" })
-        .eq("id", activityToRate.id);
+        .from("event_attendees")
+        .delete()
+        .eq("event_id", activityToRate.id)
+        .eq("user_id", session.user.id);
 
       if (error) throw error;
 
