@@ -280,6 +280,8 @@ const styles = StyleSheet.create({
     marginTop: 55,
   },
   caption: {
+    width: "80%", // take 90% of the card width
+    textAlign: "center",
     padding: 10,
     fontSize: 15,
     color: "#333",
