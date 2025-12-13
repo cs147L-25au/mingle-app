@@ -3,6 +3,7 @@ import { Marker } from "react-native-maps";
 import { theme } from "../assets/theme";
 import { Event } from "../utils/types";
 import { getActivityStyle } from "../utils/getEventIcons";
+import { Platform } from "react-native";
 
 type EventMarkersProps = {
   events: Event[];
@@ -10,6 +11,7 @@ type EventMarkersProps = {
 };
 
 const { sizes, markerColors } = theme;
+const isAndroid = Platform.OS === "android";
 
 export default function EventMarkers({
   events,
@@ -55,7 +57,10 @@ export default function EventMarkers({
               title={event.name}
               description={event.location ?? undefined}
               anchor={{ x: 0.5, y: 1 }}
-              onPress={() => onEventPress?.(event)}
+              onPress={(e) => {
+                e.stopPropagation?.(); // optional, but helps avoid MapView onPress conflicts
+                onEventPress?.(event);
+              }}
             >
               <View style={styles.markerContainer}>
                 <View style={[styles.outerCircle, { backgroundColor: color }]}>
@@ -76,10 +81,14 @@ const styles = StyleSheet.create({
   },
 
   outerCircle: {
-    height: sizes.markerOuterCircle,
+    height: isAndroid
+      ? sizes.markerOuterCircleAndroid
+      : sizes.markerOuterCircle,
     aspectRatio: 1,
 
-    borderRadius: sizes.markerOuterCircleRadius,
+    borderRadius: isAndroid
+      ? sizes.markerOuterCircleRadiusAndroid
+      : sizes.markerOuterCircleRadius,
     alignItems: "center",
     justifyContent: "center",
 
@@ -92,9 +101,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: markerColors.White,
 
-    height: sizes.markerInnerCircle,
+    height: isAndroid
+      ? sizes.markerInnerCircleAndroid
+      : sizes.markerInnerCircle,
     aspectRatio: 1,
-    borderRadius: sizes.markerInnerCircleRadius,
+    borderRadius: isAndroid
+      ? sizes.markerInnerCircleRadiusAndroid
+      : sizes.markerInnerCircleRadius,
 
     zIndex: 3, // icon layer on top of circle
     elevation: 4,
@@ -102,11 +115,11 @@ const styles = StyleSheet.create({
   pinTip: {
     width: 0,
     height: 0,
-    marginTop: -5.2,
+    marginTop: isAndroid ? -3 : -5.2,
 
-    borderLeftWidth: 14,
-    borderRightWidth: 14,
-    borderTopWidth: 13, // taller triangle
+    borderLeftWidth: isAndroid ? 9.3 : 14,
+    borderRightWidth: isAndroid ? 9.3 : 14,
+    borderTopWidth: isAndroid ? 10 : 13, // taller triangle
 
     borderLeftColor: "transparent",
     borderRightColor: "transparent",

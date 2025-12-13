@@ -8,8 +8,11 @@ import {
   MaterialIcons,
   FontAwesome,
 } from "@expo/vector-icons";
+import { Platform } from "react-native";
 
+const isAndroid = Platform.OS === "android";
 const { sizes, markerColors } = theme;
+const size = isAndroid ? sizes.markerIconAndroid : sizes.markerIcon;
 
 function getActivityIcon(activity: ActivityType) {
   switch (activity) {
@@ -17,7 +20,7 @@ function getActivityIcon(activity: ActivityType) {
       return (
         <MaterialCommunityIcons
           name="food-fork-drink"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors["Food & Dining"]}
         />
       );
@@ -26,43 +29,35 @@ function getActivityIcon(activity: ActivityType) {
       return (
         <FontAwesome6
           name="person-hiking"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors.Hiking}
         />
       );
 
     case "Movies":
       return (
-        <MaterialIcons
-          name="movie"
-          size={sizes.markerIcon}
-          color={markerColors.Movies}
-        />
+        <MaterialIcons name="movie" size={size} color={markerColors.Movies} />
       );
 
     case "Concerts":
       return (
         <Ionicons
           name="musical-notes"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors.Concerts}
         />
       );
 
     case "Sports":
       return (
-        <Ionicons
-          name="tennisball"
-          size={sizes.markerIcon}
-          color={markerColors.Sports}
-        />
+        <Ionicons name="tennisball" size={size} color={markerColors.Sports} />
       );
 
     case "Gaming":
       return (
         <Entypo
           name="game-controller"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors.Gaming}
         />
       );
@@ -71,7 +66,7 @@ function getActivityIcon(activity: ActivityType) {
       return (
         <FontAwesome6
           name="palette"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors["Art & Museums"]}
         />
       );
@@ -80,7 +75,7 @@ function getActivityIcon(activity: ActivityType) {
       return (
         <FontAwesome
           name="coffee"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors["Coffee & Cafes"]}
         />
       );
@@ -89,15 +84,13 @@ function getActivityIcon(activity: ActivityType) {
       return (
         <MaterialIcons
           name="emoji-people"
-          size={sizes.markerIcon}
+          size={size}
           color={markerColors.Other}
         />
       );
 
     case "Home":
-      return (
-        <Entypo name="home" size={sizes.markerIcon} color={markerColors.Home} />
-      );
+      return <Entypo name="home" size={size} color={markerColors.Home} />;
   }
 }
 

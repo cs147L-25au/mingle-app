@@ -19,6 +19,14 @@ export const theme = {
     markerInnerCircle: 30,
     markerInnerCircleRadius: 15,
     markerIcon: 17,
+
+    // android
+    markerOuterCircleAndroid: 32,
+    markerOuterCircleRadiusAndroid: 16,
+    markerInnerCircleAndroid: 20,
+    markerInnerCircleRadiusAndroid: 10,
+    markerIconAndroid: 13,
+
     tabIcons: 32,
     plusIcon: 46,
     plusIconRadius: 23,

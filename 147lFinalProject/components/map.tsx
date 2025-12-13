@@ -180,7 +180,7 @@ export default function Map() {
         initialRegion={region}
         showsUserLocation={false}
         customMapStyle={mapStyle}
-        onRegionChange={() => setSelectedEvent(null)}
+        onPress={() => setSelectedEvent(null)}
       >
         <EventMarkers events={events} onEventPress={setSelectedEvent} />
       </MapView>
