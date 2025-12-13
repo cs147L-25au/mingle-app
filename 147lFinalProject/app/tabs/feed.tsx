@@ -106,6 +106,7 @@ export default function Feed() {
         activityName: activity?.name ?? "",
         like_count: likesForPost.length,
         liked_by_user: likesForPost.some((l) => l.user_id === userId),
+        caption: post.caption ?? "",
       };
     });
 
@@ -211,7 +212,7 @@ export default function Feed() {
 
             <Image source={{ uri: item.media_url }} style={styles.postImage} />
 
-            {item.caption && <Text style={styles.caption}>{item.caption}</Text>}
+            <Text style={styles.caption}>{item.caption}</Text>
 
             <View style={styles.likeContainer}>
               <Pressable onPress={() => toggleLike(item.id)}>
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   postCard: {
-    height: 450,
+    // height: 450,
     borderWidth: 2,
     marginBottom: 20,
     overflow: "hidden",
