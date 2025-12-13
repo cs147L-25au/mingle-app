@@ -624,6 +624,34 @@ export default function Profile() {
 
         if (error) throw error;
 
+        // Add system message to chat
+        try {
+          const { data: chatData } = await supabase
+            .from("chats")
+            .select("id")
+            .eq("event_id", activity.id)
+            .single();
+
+          if (chatData) {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("name")
+              .eq("user_id", session.user.id)
+              .single();
+
+            const userName = profileData?.name || "Someone";
+
+            await supabase.from("messages").insert({
+              chat_id: chatData.id,
+              user_id: session.user.id,
+              type: "system",
+              content: `${userName} marked this activity as completed`,
+            });
+          }
+        } catch (err) {
+          console.error("Error adding system message:", err);
+        }
+
         fetchActivities();
         Alert.alert("Success", "Activity marked as complete!");
         return;
@@ -699,6 +727,34 @@ export default function Profile() {
 
       if (updateError) throw updateError;
 
+      // Add system message to chat
+      try {
+        const { data: chatData } = await supabase
+          .from("chats")
+          .select("id")
+          .eq("event_id", activityToRate.id)
+          .single();
+
+        if (chatData) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("user_id", session.user.id)
+            .single();
+
+          const userName = profileData?.name || "Someone";
+
+          await supabase.from("messages").insert({
+            chat_id: chatData.id,
+            user_id: session.user.id,
+            type: "system",
+            content: `${userName} completed this activity`,
+          });
+        }
+      } catch (err) {
+        console.error("Error adding system message:", err);
+      }
+
       // Reset modal state
       setRatingModalVisible(false);
       setActivityToRate(null);
@@ -727,6 +783,34 @@ export default function Profile() {
         .eq("user_id", session.user.id);
 
       if (error) throw error;
+
+      // Add system message to chat
+      try {
+        const { data: chatData } = await supabase
+          .from("chats")
+          .select("id")
+          .eq("event_id", activityToRate.id)
+          .single();
+
+        if (chatData) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("user_id", session.user.id)
+            .single();
+
+          const userName = profileData?.name || "Someone";
+
+          await supabase.from("messages").insert({
+            chat_id: chatData.id,
+            user_id: session.user.id,
+            type: "system",
+            content: `${userName} completed this activity`,
+          });
+        }
+      } catch (err) {
+        console.error("Error adding system message:", err);
+      }
 
       // Reset modal state
       setRatingModalVisible(false);
@@ -765,6 +849,34 @@ export default function Profile() {
           .eq("user_id", session.user.id);
 
         if (error) throw error;
+      }
+
+      // Add system message to chat
+      try {
+        const { data: chatData } = await supabase
+          .from("chats")
+          .select("id")
+          .eq("event_id", activity.id)
+          .single();
+
+        if (chatData) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("user_id", session.user.id)
+            .single();
+
+          const userName = profileData?.name || "Someone";
+
+          await supabase.from("messages").insert({
+            chat_id: chatData.id,
+            user_id: session.user.id,
+            type: "system",
+            content: `${userName} marked this activity as pending`,
+          });
+        }
+      } catch (err) {
+        console.error("Error adding system message:", err);
       }
 
       fetchActivities();
@@ -1639,6 +1751,7 @@ const styles = StyleSheet.create({
   },
   activityScrollContent: {
     paddingRight: 20,
+    paddingVertical: 10,
   },
   activityCard: {
     width: 240,
