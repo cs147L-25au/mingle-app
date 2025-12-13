@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
@@ -414,167 +415,172 @@ export default function CreateActivity() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>✕</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Create Activity</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView style={styles.content}>
-        {/* Activity Name */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Activity Name *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Coffee at Blue Bottle"
-            value={activityName}
-            onChangeText={setActivityName}
-            maxLength={100}
-          />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>✕</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>Create Activity</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        {/* Description */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Tell people what this activity is about..."
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            maxLength={500}
+        <ScrollView style={styles.content}>
+          {/* Activity Name */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Activity Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Coffee at Blue Bottle"
+              value={activityName}
+              onChangeText={setActivityName}
+              maxLength={100}
+            />
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Tell people what this activity is about..."
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              maxLength={500}
+            />
+            <Text style={styles.charCount}>{description.length}/500</Text>
+          </View>
+
+          {/* Activity Type Dropdown */}
+          <Dropdown
+            label="Activity Type"
+            value={activityType}
+            options={ACTIVITY_TYPES}
+            onSelect={setActivityType}
+            placeholder="Select activity type"
           />
-          <Text style={styles.charCount}>{description.length}/500</Text>
-        </View>
 
-        {/* Activity Type Dropdown */}
-        <Dropdown
-          label="Activity Type"
-          value={activityType}
-          options={ACTIVITY_TYPES}
-          onSelect={setActivityType}
-          placeholder="Select activity type"
-        />
+          {/* Price Range Dropdown */}
+          <Dropdown
+            label="Price Range"
+            value={priceRange}
+            options={PRICE_RANGES}
+            onSelect={setPriceRange}
+            placeholder="Select price range"
+          />
 
-        {/* Price Range Dropdown */}
-        <Dropdown
-          label="Price Range"
-          value={priceRange}
-          options={PRICE_RANGES}
-          onSelect={setPriceRange}
-          placeholder="Select price range"
-        />
+          {/* Time Dropdown */}
+          <Dropdown
+            label="Time"
+            value={timeSlot}
+            options={TIME_OPTIONS}
+            onSelect={setTimeSlot}
+            placeholder="Select time"
+          />
 
-        {/* Time Dropdown */}
-        <Dropdown
-          label="Time"
-          value={timeSlot}
-          options={TIME_OPTIONS}
-          onSelect={setTimeSlot}
-          placeholder="Select time"
-        />
+          {/* Date Field */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Activity Date *</Text>
 
-        {/* Date Field */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Activity Date *</Text>
+            <Pressable onPress={() => setShowDatePicker(true)}>
+              <Text style={[styles.input, { color: date ? "#000" : "#999" }]}>
+                {date
+                  ? date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Select a date"}
+              </Text>
+            </Pressable>
 
-          <Pressable onPress={() => setShowDatePicker(true)}>
-            <Text style={[styles.input, { color: date ? "#000" : "#999" }]}>
-              {date
-                ? date.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "Select a date"}
+            {/* iOS Date Picker Modal */}
+            {Platform.OS === "ios" && showDatePicker && (
+              <Modal
+                visible={showDatePicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.datePickerModal}>
+                    <View style={styles.datePickerHeader}>
+                      <Pressable onPress={() => setShowDatePicker(false)}>
+                        <Text style={styles.datePickerCancel}>Cancel</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setShowDatePicker(false)}>
+                        <Text style={styles.datePickerDone}>Done</Text>
+                      </Pressable>
+                    </View>
+                    <DateTimePicker
+                      value={date ?? new Date()}
+                      mode="date"
+                      display="spinner"
+                      onChange={(event, selectedDate) => {
+                        if (selectedDate) {
+                          setDate(selectedDate);
+                        }
+                      }}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            )}
+
+            {/* Android Date Picker */}
+            {Platform.OS === "android" && showDatePicker && (
+              <DateTimePicker
+                value={date ?? new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) {
+                    setDate(selectedDate);
+                  }
+                }}
+              />
+            )}
+          </View>
+
+          {/* Location */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Location or Address *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Stanford Shopping Center, Palo Alto, CA"
+              value={location}
+              onChangeText={setLocation}
+              maxLength={200}
+            />
+            <Text style={styles.locationHint}>
+              Be specific for better results (include city/state)
             </Text>
+          </View>
+
+          {/* Create Button */}
+          <Pressable
+            style={[styles.createButton, loading && styles.buttonDisabled]}
+            onPress={handleCreateActivity}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.createButtonText}>Create Activity</Text>
+            )}
           </Pressable>
 
-          {/* iOS Date Picker Modal */}
-          {Platform.OS === "ios" && showDatePicker && (
-            <Modal
-              visible={showDatePicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowDatePicker(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.datePickerModal}>
-                  <View style={styles.datePickerHeader}>
-                    <Pressable onPress={() => setShowDatePicker(false)}>
-                      <Text style={styles.datePickerCancel}>Cancel</Text>
-                    </Pressable>
-                    <Pressable onPress={() => setShowDatePicker(false)}>
-                      <Text style={styles.datePickerDone}>Done</Text>
-                    </Pressable>
-                  </View>
-                  <DateTimePicker
-                    value={date ?? new Date()}
-                    mode="date"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate) {
-                        setDate(selectedDate);
-                      }
-                    }}
-                  />
-                </View>
-              </View>
-            </Modal>
-          )}
-
-          {/* Android Date Picker */}
-          {Platform.OS === "android" && showDatePicker && (
-            <DateTimePicker
-              value={date ?? new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) {
-                  setDate(selectedDate);
-                }
-              }}
-            />
-          )}
-        </View>
-
-        {/* Location */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Location or Address *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Stanford Shopping Center, Palo Alto, CA"
-            value={location}
-            onChangeText={setLocation}
-            maxLength={200}
-          />
-          <Text style={styles.locationHint}>
-            Be specific for better results (include city/state)
-          </Text>
-        </View>
-
-        {/* Create Button */}
-        <Pressable
-          style={[styles.createButton, loading && styles.buttonDisabled]}
-          onPress={handleCreateActivity}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.createButtonText}>Create Activity</Text>
-          )}
-        </Pressable>
-
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
-    </View>
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -700,6 +706,7 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "600",
   },
+  scrollContainer: {},
   closeButton: {
     padding: 20,
     alignItems: "center",
