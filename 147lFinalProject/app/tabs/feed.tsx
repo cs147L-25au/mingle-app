@@ -45,7 +45,6 @@ export default function Feed() {
 
     setLoading(true);
 
-    // Fetch the latest 20 posts
     const { data: postsData, error: postsError } = await supabase
       .from("user_media")
       .select("id, user_id, caption, media_url, created_at, activity_id")
@@ -58,12 +57,10 @@ export default function Feed() {
       return;
     }
 
-    // Filter out null activity_ids
     const activityIds = Array.from(
       new Set(postsData.map((m) => m.activity_id).filter((id) => id !== null))
     );
 
-    // Fetch events only for valid IDs
     const { data: eventsData, error: eventsError } = await supabase
       .from("events")
       .select("id, name")
@@ -75,25 +72,21 @@ export default function Feed() {
 
     const eventsArray = eventsData ?? [];
 
-    // Fetch profile info
     const userIds = Array.from(new Set(postsData.map((p) => p.user_id)));
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("user_id, name")
       .in("user_id", userIds);
 
-    // Fetch likes
     const postIds = postsData.map((p) => p.id);
     const { data: likesData } = await supabase
       .from("post_likes")
       .select("post_id, user_id")
       .in("post_id", postIds);
 
-    // Combine everything
     const postsWithExtras = postsData.map((post) => {
       const profile = profilesData.find((p) => p.user_id === post.user_id);
 
-      // Only look for activity if activity_id exists
       const activity = post.activity_id
         ? eventsArray.find((e) => e.id === post.activity_id)
         : null;
@@ -280,7 +273,7 @@ const styles = StyleSheet.create({
     marginTop: 55,
   },
   caption: {
-    width: "80%", // take 90% of the card width
+    width: "80%",
     textAlign: "center",
     padding: 10,
     fontSize: 15,

@@ -161,13 +161,11 @@ export default function ChatRoom() {
       return;
     }
 
-    // 4. Update the map
     const newMap = { ...profilesMap };
     data.forEach((profile: any) => {
       newMap[profile.user_id] = profile.name;
     });
 
-    // Add fallback for any IDs not found in profiles table
     unknownIds.forEach((id) => {
       if (!newMap[id]) newMap[id] = "Unknown User";
     });
@@ -250,7 +248,9 @@ export default function ChatRoom() {
     return (
       <View style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color="#8174A0" />
-        <Text style={{ marginTop: 10, color: "#6B6078" }}>Loading chat messages...</Text>
+        <Text style={{ marginTop: 10, color: "#6B6078" }}>
+          Loading chat messages...
+        </Text>
       </View>
     );
   }

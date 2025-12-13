@@ -926,622 +926,619 @@ export default function Profile() {
   }
 
   return (
-    <KeyboardAvoidingView
+    <ScrollView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      contentContainerStyle={styles.scrollContent}
     >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Profile Header */}
-        <View style={styles.header}>
-          <View style={styles.profilePicturePlaceholder}>
-            <Text style={styles.profileInitial}>{profile.name[0]}</Text>
-          </View>
-          <Text style={styles.name}>{profile.name}</Text>
-          {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
+      {/* Profile Header */}
+      <View style={styles.header}>
+        <View style={styles.profilePicturePlaceholder}>
+          <Text style={styles.profileInitial}>{profile.name[0]}</Text>
+        </View>
+        <Text style={styles.name}>{profile.name}</Text>
+        {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
 
-          {/* Interests */}
-          <View style={styles.interestsContainer}>
-            {profile.interests.map((interest, index) => (
-              <View key={index} style={styles.interestChip}>
-                <Text style={styles.interestText}>{interest}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Organizer Ratings */}
-          {ratings && ratings.totalRatings > 0 && (
-            <View style={styles.ratingsSection}>
-              <Text style={styles.ratingsSectionTitle}>
-                My Organizer Rating
-              </Text>
-              <Text style={styles.ratingsCount}>
-                Based on {ratings.totalRatings} rating
-                {ratings.totalRatings !== 1 ? "s" : ""}
-              </Text>
-
-              <View style={styles.ratingRow}>
-                <Text style={styles.ratingLabel}>Communication</Text>
-                <View style={styles.ratingValueContainer}>
-                  <Text style={styles.ratingStars}>
-                    {"★".repeat(Math.round(ratings.avgCommunication))}
-                    {"☆".repeat(5 - Math.round(ratings.avgCommunication))}
-                  </Text>
-                  <Text style={styles.ratingValue}>
-                    {ratings.avgCommunication.toFixed(1)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.ratingRow}>
-                <Text style={styles.ratingLabel}>Safety</Text>
-                <View style={styles.ratingValueContainer}>
-                  <Text style={styles.ratingStars}>
-                    {"★".repeat(Math.round(ratings.avgSafety))}
-                    {"☆".repeat(5 - Math.round(ratings.avgSafety))}
-                  </Text>
-                  <Text style={styles.ratingValue}>
-                    {ratings.avgSafety.toFixed(1)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.ratingRow}>
-                <Text style={styles.ratingLabel}>Overall</Text>
-                <View style={styles.ratingValueContainer}>
-                  <Text style={styles.ratingStars}>
-                    {"★".repeat(Math.round(ratings.avgOverall))}
-                    {"☆".repeat(5 - Math.round(ratings.avgOverall))}
-                  </Text>
-                  <Text style={styles.ratingValue}>
-                    {ratings.avgOverall.toFixed(1)}
-                  </Text>
-                </View>
-              </View>
+        {/* Interests */}
+        <View style={styles.interestsContainer}>
+          {profile.interests.map((interest, index) => (
+            <View key={index} style={styles.interestChip}>
+              <Text style={styles.interestText}>{interest}</Text>
             </View>
-          )}
-
-          <Pressable
-            style={styles.editButton}
-            onPress={() => setEditModalVisible(true)}
-          >
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </Pressable>
+          ))}
         </View>
 
-        {/* TODO: SIGN OUT */}
-        <View style={styles.signOutContainer}>
-          <View style={styles.box}>
-            <Text style={styles.title}>Logged in as:</Text>
-            <Text style={styles.email}>{session.user.email}</Text>
+        {/* Organizer Ratings */}
+        {ratings && ratings.totalRatings > 0 && (
+          <View style={styles.ratingsSection}>
+            <Text style={styles.ratingsSectionTitle}>My Organizer Rating</Text>
+            <Text style={styles.ratingsCount}>
+              Based on {ratings.totalRatings} rating
+              {ratings.totalRatings !== 1 ? "s" : ""}
+            </Text>
 
-            <TouchableOpacity style={styles.button} onPress={signOut}>
-              <Text style={styles.buttonText}>Sign Out</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Activities Sections */}
-        <View style={styles.activitiesSection}>
-          {/* Pending Activities */}
-          <View style={styles.activitySubSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Pending Activities</Text>
-              {activities.filter(
-                (a) => !isActivityCompleted(a) && isUpcoming(a)
-              ).length > 0 && (
-                <Text style={styles.activityCount}>
-                  {
-                    activities.filter(
-                      (a) => !isActivityCompleted(a) && isUpcoming(a)
-                    ).length
-                  }
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>Communication</Text>
+              <View style={styles.ratingValueContainer}>
+                <Text style={styles.ratingStars}>
+                  {"★".repeat(Math.round(ratings.avgCommunication))}
+                  {"☆".repeat(5 - Math.round(ratings.avgCommunication))}
                 </Text>
-              )}
+                <Text style={styles.ratingValue}>
+                  {ratings.avgCommunication.toFixed(1)}
+                </Text>
+              </View>
             </View>
+
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>Safety</Text>
+              <View style={styles.ratingValueContainer}>
+                <Text style={styles.ratingStars}>
+                  {"★".repeat(Math.round(ratings.avgSafety))}
+                  {"☆".repeat(5 - Math.round(ratings.avgSafety))}
+                </Text>
+                <Text style={styles.ratingValue}>
+                  {ratings.avgSafety.toFixed(1)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.ratingRow}>
+              <Text style={styles.ratingLabel}>Overall</Text>
+              <View style={styles.ratingValueContainer}>
+                <Text style={styles.ratingStars}>
+                  {"★".repeat(Math.round(ratings.avgOverall))}
+                  {"☆".repeat(5 - Math.round(ratings.avgOverall))}
+                </Text>
+                <Text style={styles.ratingValue}>
+                  {ratings.avgOverall.toFixed(1)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <Pressable
+          style={styles.editButton}
+          onPress={() => setEditModalVisible(true)}
+        >
+          <Text style={styles.editButtonText}>Edit Profile</Text>
+        </Pressable>
+      </View>
+
+      {/* TODO: SIGN OUT */}
+      <View style={styles.signOutContainer}>
+        <View style={styles.box}>
+          <Text style={styles.title}>Logged in as:</Text>
+          <Text style={styles.email}>{session.user.email}</Text>
+
+          <TouchableOpacity style={styles.button} onPress={signOut}>
+            <Text style={styles.buttonText}>Sign Out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Activities Sections */}
+      <View style={styles.activitiesSection}>
+        {/* Pending Activities */}
+        <View style={styles.activitySubSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Pending Activities</Text>
             {activities.filter((a) => !isActivityCompleted(a) && isUpcoming(a))
-              .length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>
-                  No pending activities. Create one from the Map tab!
-                </Text>
-              </View>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.activityScrollContent}
-              >
-                {activities
-                  .filter((a) => !isActivityCompleted(a) && isUpcoming(a))
-                  .map((activity, index) => (
-                    <View
-                      key={activity.id}
-                      style={[
-                        styles.activityCard,
-                        index === 0 && styles.firstCard,
-                      ]}
-                    >
-                      <View style={styles.activityBadge}>
-                        <Text style={styles.activityBadgeText}>
-                          {activity.activity_type}
-                        </Text>
-                      </View>
-                      <Text style={styles.activityName} numberOfLines={2}>
-                        {activity.name}
-                      </Text>
-                      <View style={styles.activityDetails}>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>📍</Text>
-                          <Text
-                            style={styles.activityDetailText}
-                            numberOfLines={1}
-                          >
-                            {activity.location}
-                          </Text>
-                        </View>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>🕐</Text>
-                          <Text style={styles.activityDetailText}>
-                            {activity.time_slot}
-                          </Text>
-                        </View>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>💰</Text>
-                          <Text style={styles.activityDetailText}>
-                            {activity.price_range}
-                          </Text>
-                        </View>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>👥</Text>
-                          <Text style={styles.activityDetailText}>
-                            {activity.attendee_count || 0}{" "}
-                            {activity.attendee_count === 1
-                              ? "person"
-                              : "people"}{" "}
-                            joined
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Complete button */}
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.completeButton,
-                          pressed && styles.completeButtonPressed,
-                        ]}
-                        onPress={() => handleCompleteActivity(activity)}
-                      >
-                        <Text style={styles.completeButtonText}>
-                          ✓ Mark Complete
-                        </Text>
-                      </Pressable>
-                    </View>
-                  ))}
-              </ScrollView>
+              .length > 0 && (
+              <Text style={styles.activityCount}>
+                {
+                  activities.filter(
+                    (a) => !isActivityCompleted(a) && isUpcoming(a)
+                  ).length
+                }
+              </Text>
             )}
           </View>
-
-          {/* Completed Activities */}
-          <View style={styles.activitySubSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Completed Activities</Text>
-              {activities.filter((a) => isActivityCompleted(a)).length > 0 && (
-                <Text style={styles.activityCount}>
-                  {activities.filter((a) => isActivityCompleted(a)).length}
-                </Text>
-              )}
-            </View>
-            {activities.filter((a) => isActivityCompleted(a)).length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>
-                  No completed activities yet.
-                </Text>
-              </View>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.activityScrollContent}
-              >
-                {activities
-                  .filter((a) => isActivityCompleted(a))
-                  .map((activity, index) => (
-                    <View
-                      key={activity.id}
-                      style={[
-                        styles.activityCard,
-                        styles.completedCard,
-                        index === 0 && styles.firstCard,
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.activityBadge,
-                          styles.completedBadgeContainer,
-                        ]}
-                      >
-                        <Text style={styles.completedBadgeText}>
-                          ✓ {activity.activity_type}
-                        </Text>
-                      </View>
-                      <Text style={styles.activityName} numberOfLines={2}>
-                        {activity.name}
-                      </Text>
-                      <View style={styles.activityDetails}>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>📍</Text>
-                          <Text
-                            style={styles.activityDetailText}
-                            numberOfLines={1}
-                          >
-                            {activity.location}
-                          </Text>
-                        </View>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>🕐</Text>
-                          <Text style={styles.activityDetailText}>
-                            {activity.time_slot}
-                          </Text>
-                        </View>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>💰</Text>
-                          <Text style={styles.activityDetailText}>
-                            {activity.price_range}
-                          </Text>
-                        </View>
-                        <View style={styles.activityDetailRow}>
-                          <Text style={styles.activityIcon}>👥</Text>
-                          <Text style={styles.activityDetailText}>
-                            {activity.attendee_count || 0}{" "}
-                            {activity.attendee_count === 1
-                              ? "person"
-                              : "people"}{" "}
-                            joined
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Uncomplete button */}
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.uncompleteButton,
-                          pressed && styles.uncompleteButtonPressed,
-                        ]}
-                        onPress={() => handleUncompleteActivity(activity)}
-                      >
-                        <Text style={styles.uncompleteButtonText}>
-                          ↻ Mark as Pending
-                        </Text>
-                      </Pressable>
-                    </View>
-                  ))}
-              </ScrollView>
-            )}
-          </View>
-        </View>
-
-        {/* Gallery Section */}
-        <View style={styles.gallerySection}>
-          <View style={styles.gallerySectionHeader}>
-            <Text style={styles.sectionTitle}>My Meet-ups Gallery</Text>
-            <Pressable
-              style={styles.addMediaButton}
-              onPress={() => setAddMediaModalVisible(true)}
-            >
-              <Text style={styles.addMediaButtonText}>+ Add</Text>
-            </Pressable>
-          </View>
-
-          {media.length === 0 ? (
-            <View style={styles.emptyGallery}>
-              <Text style={styles.emptyGalleryText}>
-                No photos yet! Add photos from your meet-ups.
+          {activities.filter((a) => !isActivityCompleted(a) && isUpcoming(a))
+            .length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                No pending activities. Create one from the Map tab!
               </Text>
             </View>
           ) : (
-            <View style={styles.gallery}>
-              {media.map((item, index) => (
-                <Pressable
-                  key={item.id}
-                  style={[
-                    styles.mediaItem,
-                    index % 2 === 0
-                      ? styles.mediaItemLeft
-                      : styles.mediaItemRight,
-                  ]}
-                  onPress={() => {
-                    // Optional: Add full-screen image view later
-                    console.log("Tapped image:", item.media_url);
-                  }}
-                >
-                  <Image
-                    source={{ uri: item.media_url }}
-                    style={styles.mediaImage}
-                    resizeMode="cover"
-                    onLoad={() => console.log(`Image loaded: ${item.id}`)}
-                    onError={(error) => {
-                      console.error(
-                        `Image load error for ${item.id}:`,
-                        error.nativeEvent.error
-                      );
-                      console.error(`Failed URL: ${item.media_url}`);
-                    }}
-                  />
-
-                  {/* Delete Button */}
-                  <Pressable
-                    style={styles.deleteButton}
-                    onPress={() => handleDeleteMedia(item.id, item.media_url)}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.activityScrollContent}
+            >
+              {activities
+                .filter((a) => !isActivityCompleted(a) && isUpcoming(a))
+                .map((activity, index) => (
+                  <View
+                    key={activity.id}
+                    style={[
+                      styles.activityCard,
+                      index === 0 && styles.firstCard,
+                    ]}
                   >
-                    <Text style={styles.deleteButtonText}>✕</Text>
-                  </Pressable>
-
-                  {item.caption && (
-                    <View style={styles.captionOverlay}>
-                      <Text style={styles.mediaCaption} numberOfLines={2}>
-                        {item.caption}
+                    <View style={styles.activityBadge}>
+                      <Text style={styles.activityBadgeText}>
+                        {activity.activity_type}
                       </Text>
                     </View>
-                  )}
-                </Pressable>
-              ))}
-            </View>
+                    <Text style={styles.activityName} numberOfLines={2}>
+                      {activity.name}
+                    </Text>
+                    <View style={styles.activityDetails}>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>📍</Text>
+                        <Text
+                          style={styles.activityDetailText}
+                          numberOfLines={1}
+                        >
+                          {activity.location}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>🕐</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.time_slot}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>💰</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.price_range}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>👥</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.attendee_count || 0}{" "}
+                          {activity.attendee_count === 1 ? "person" : "people"}{" "}
+                          joined
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Complete button */}
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.completeButton,
+                        pressed && styles.completeButtonPressed,
+                      ]}
+                      onPress={() => handleCompleteActivity(activity)}
+                    >
+                      <Text style={styles.completeButtonText}>
+                        ✓ Mark Complete
+                      </Text>
+                    </Pressable>
+                  </View>
+                ))}
+            </ScrollView>
           )}
         </View>
 
-        {/* Edit Profile Modal */}
-        <Modal
-          visible={editModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setEditModalVisible(false)}
+        {/* Completed Activities */}
+        <View style={styles.activitySubSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Completed Activities</Text>
+            {activities.filter((a) => isActivityCompleted(a)).length > 0 && (
+              <Text style={styles.activityCount}>
+                {activities.filter((a) => isActivityCompleted(a)).length}
+              </Text>
+            )}
+          </View>
+          {activities.filter((a) => isActivityCompleted(a)).length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                No completed activities yet.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.activityScrollContent}
+            >
+              {activities
+                .filter((a) => isActivityCompleted(a))
+                .map((activity, index) => (
+                  <View
+                    key={activity.id}
+                    style={[
+                      styles.activityCard,
+                      styles.completedCard,
+                      index === 0 && styles.firstCard,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.activityBadge,
+                        styles.completedBadgeContainer,
+                      ]}
+                    >
+                      <Text style={styles.completedBadgeText}>
+                        ✓ {activity.activity_type}
+                      </Text>
+                    </View>
+                    <Text style={styles.activityName} numberOfLines={2}>
+                      {activity.name}
+                    </Text>
+                    <View style={styles.activityDetails}>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>📍</Text>
+                        <Text
+                          style={styles.activityDetailText}
+                          numberOfLines={1}
+                        >
+                          {activity.location}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>🕐</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.time_slot}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>💰</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.price_range}
+                        </Text>
+                      </View>
+                      <View style={styles.activityDetailRow}>
+                        <Text style={styles.activityIcon}>👥</Text>
+                        <Text style={styles.activityDetailText}>
+                          {activity.attendee_count || 0}{" "}
+                          {activity.attendee_count === 1 ? "person" : "people"}{" "}
+                          joined
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Uncomplete button */}
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.uncompleteButton,
+                        pressed && styles.uncompleteButtonPressed,
+                      ]}
+                      onPress={() => handleUncompleteActivity(activity)}
+                    >
+                      <Text style={styles.uncompleteButtonText}>
+                        ↻ Mark as Pending
+                      </Text>
+                    </Pressable>
+                  </View>
+                ))}
+            </ScrollView>
+          )}
+        </View>
+      </View>
+
+      {/* Gallery Section */}
+      <View style={styles.gallerySection}>
+        <View style={styles.gallerySectionHeader}>
+          <Text style={styles.sectionTitle}>My Meet-ups Gallery</Text>
+          <Pressable
+            style={styles.addMediaButton}
+            onPress={() => setAddMediaModalVisible(true)}
+          >
+            <Text style={styles.addMediaButtonText}>+ Add</Text>
+          </Pressable>
+        </View>
+
+        {media.length === 0 ? (
+          <View style={styles.emptyGallery}>
+            <Text style={styles.emptyGalleryText}>
+              No photos yet! Add photos from your meet-ups.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.gallery}>
+            {media.map((item, index) => (
+              <Pressable
+                key={item.id}
+                style={[
+                  styles.mediaItem,
+                  index % 2 === 0
+                    ? styles.mediaItemLeft
+                    : styles.mediaItemRight,
+                ]}
+                onPress={() => {
+                  // Optional: Add full-screen image view later
+                  console.log("Tapped image:", item.media_url);
+                }}
+              >
+                <Image
+                  source={{ uri: item.media_url }}
+                  style={styles.mediaImage}
+                  resizeMode="cover"
+                  onLoad={() => console.log(`Image loaded: ${item.id}`)}
+                  onError={(error) => {
+                    console.error(
+                      `Image load error for ${item.id}:`,
+                      error.nativeEvent.error
+                    );
+                    console.error(`Failed URL: ${item.media_url}`);
+                  }}
+                />
+
+                {/* Delete Button */}
+                <Pressable
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteMedia(item.id, item.media_url)}
+                >
+                  <Text style={styles.deleteButtonText}>✕</Text>
+                </Pressable>
+
+                {item.caption && (
+                  <View style={styles.captionOverlay}>
+                    <Text style={styles.mediaCaption} numberOfLines={2}>
+                      {item.caption}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Edit Profile</Text>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Profile</Text>
 
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={editedName}
-                onChangeText={setEditedName}
-                placeholder="Enter your name"
-              />
+            <Text style={styles.label}>Name</Text>
+            <TextInput
+              style={styles.input}
+              value={editedName}
+              onChangeText={setEditedName}
+              placeholder="Enter your name"
+            />
 
-              <Text style={styles.label}>Bio</Text>
-              <TextInput
-                style={[styles.input, styles.bioInput]}
-                value={editedBio}
-                onChangeText={setEditedBio}
-                placeholder="Tell us about yourself..."
-                multiline
-                numberOfLines={4}
-              />
+            <Text style={styles.label}>Bio</Text>
+            <TextInput
+              style={[styles.input, styles.bioInput]}
+              value={editedBio}
+              onChangeText={setEditedBio}
+              placeholder="Tell us about yourself..."
+              multiline
+              numberOfLines={4}
+            />
 
-              <View style={styles.modalButtons}>
-                <Pressable
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => setEditModalVisible(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.modalButton, styles.saveButton]}
-                  onPress={handleSaveProfile}
-                >
-                  <Text style={styles.saveButtonText}>Save</Text>
-                </Pressable>
-              </View>
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleSaveProfile}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </Pressable>
             </View>
           </View>
-        </Modal>
+        </KeyboardAvoidingView>
+      </Modal>
 
-        {/* Add Media Modal */}
-        <Modal
-          visible={addMediaModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => {
-            setAddMediaModalVisible(false);
-            setSelectedImage(null);
-            setNewMediaCaption("");
-          }}
+      {/* Add Media Modal */}
+      <Modal
+        visible={addMediaModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setAddMediaModalVisible(false);
+          setSelectedImage(null);
+          setNewMediaCaption("");
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Add Media</Text>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Media</Text>
 
-              {/* Image Selection */}
+            {/* Image Selection */}
+            <Pressable
+              style={styles.imagePickerButton}
+              onPress={pickImage}
+              disabled={uploading}
+            >
+              <Text style={styles.imagePickerButtonText}>
+                {selectedImage ? "Change Photo" : "📷 Choose from Device"}
+              </Text>
+            </Pressable>
+
+            {/* Image Preview */}
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.imagePreview}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
+
+            <Text style={styles.label}>Caption (optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={newMediaCaption}
+              onChangeText={setNewMediaCaption}
+              placeholder="Add a caption..."
+            />
+
+            <Text style={styles.label}>Activity</Text>
+            <DropDownPicker
+              open={openDropdown}
+              value={selectedActivityId}
+              items={activities
+                .filter((a) => isActivityCompleted(a))
+                .map((a) => ({ label: a.name, value: a.id }))}
+              setOpen={setOpenDropdown}
+              setValue={setSelectedActivityId}
+              placeholder="Select completed activity..."
+              containerStyle={{ marginBottom: 16 }}
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownList}
+            />
+
+            <View style={styles.modalButtons}>
               <Pressable
-                style={styles.imagePickerButton}
-                onPress={pickImage}
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setAddMediaModalVisible(false);
+                  setSelectedImage(null);
+                  setNewMediaCaption("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleAddMedia}
                 disabled={uploading}
               >
-                <Text style={styles.imagePickerButtonText}>
-                  {selectedImage ? "Change Photo" : "📷 Choose from Device"}
-                </Text>
+                {uploading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Add</Text>
+                )}
               </Pressable>
-
-              {/* Image Preview */}
-              {selectedImage && (
-                <View style={styles.imagePreviewContainer}>
-                  <Image
-                    source={{ uri: selectedImage }}
-                    style={styles.imagePreview}
-                    resizeMode="cover"
-                  />
-                </View>
-              )}
-
-              <Text style={styles.label}>Caption (optional)</Text>
-              <TextInput
-                style={styles.input}
-                value={newMediaCaption}
-                onChangeText={setNewMediaCaption}
-                placeholder="Add a caption..."
-              />
-
-              <Text style={styles.label}>Activity</Text>
-              <DropDownPicker
-                open={openDropdown}
-                value={selectedActivityId}
-                items={activities
-                  .filter((a) => isActivityCompleted(a))
-                  .map((a) => ({ label: a.name, value: a.id }))}
-                setOpen={setOpenDropdown}
-                setValue={setSelectedActivityId}
-                placeholder="Select completed activity..."
-                containerStyle={{ marginBottom: 16 }}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownList}
-              />
-
-              <View style={styles.modalButtons}>
-                <Pressable
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setAddMediaModalVisible(false);
-                    setSelectedImage(null);
-                    setNewMediaCaption("");
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.modalButton, styles.saveButton]}
-                  onPress={handleAddMedia}
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Add</Text>
-                  )}
-                </Pressable>
-              </View>
             </View>
           </View>
-        </Modal>
+        </KeyboardAvoidingView>
+      </Modal>
 
-        {/* Rating Modal */}
-        <Modal
-          visible={ratingModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => {
-            setRatingModalVisible(false);
-            setActivityToRate(null);
-            setCommunicationRating(0);
-            setSafetyRating(0);
-            setOverallRating(0);
-            setRatingComment("");
-          }}
+      {/* Rating Modal */}
+      <Modal
+        visible={ratingModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setRatingModalVisible(false);
+          setActivityToRate(null);
+          setCommunicationRating(0);
+          setSafetyRating(0);
+          setOverallRating(0);
+          setRatingComment("");
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Rate the Organizer</Text>
-              {activityToRate && (
-                <Text style={styles.ratingActivityName}>
-                  {activityToRate.name}
-                </Text>
-              )}
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Rate the Organizer</Text>
+            {activityToRate && (
+              <Text style={styles.ratingActivityName}>
+                {activityToRate.name}
+              </Text>
+            )}
 
-              {/* Communication Rating */}
-              <View style={styles.ratingSection}>
-                <Text style={styles.ratingLabel}>Communication</Text>
-                <Text style={styles.ratingSubtext}>
-                  How responsive and clear were they?
-                </Text>
-                <View style={styles.starsContainer}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Pressable
-                      key={star}
-                      onPress={() => setCommunicationRating(star)}
-                      style={styles.starButton}
-                    >
-                      <Text style={styles.starText}>
-                        {star <= communicationRating ? "★" : "☆"}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              {/* Safety Rating */}
-              <View style={styles.ratingSection}>
-                <Text style={styles.ratingLabel}>Safety</Text>
-                <Text style={styles.ratingSubtext}>
-                  Did you feel safe during the activity?
-                </Text>
-                <View style={styles.starsContainer}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Pressable
-                      key={star}
-                      onPress={() => setSafetyRating(star)}
-                      style={styles.starButton}
-                    >
-                      <Text style={styles.starText}>
-                        {star <= safetyRating ? "★" : "☆"}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              {/* Overall Rating */}
-              <View style={styles.ratingSection}>
-                <Text style={styles.ratingLabel}>Overall Experience</Text>
-                <Text style={styles.ratingSubtext}>
-                  How was the activity overall?
-                </Text>
-                <View style={styles.starsContainer}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Pressable
-                      key={star}
-                      onPress={() => setOverallRating(star)}
-                      style={styles.starButton}
-                    >
-                      <Text style={styles.starText}>
-                        {star <= overallRating ? "★" : "☆"}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              {/* Comment */}
-              <Text style={styles.label}>Additional Comments (optional)</Text>
-              <TextInput
-                style={[styles.input, styles.bioInput]}
-                value={ratingComment}
-                onChangeText={setRatingComment}
-                placeholder="Share your experience..."
-                multiline
-                numberOfLines={3}
-              />
-
-              <View style={styles.modalButtons}>
-                <Pressable
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={skipRatingAndComplete}
-                >
-                  <Text style={styles.cancelButtonText}>Skip</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.modalButton, styles.saveButton]}
-                  onPress={submitRatingAndComplete}
-                >
-                  <Text style={styles.saveButtonText}>Submit</Text>
-                </Pressable>
+            {/* Communication Rating */}
+            <View style={styles.ratingSection}>
+              <Text style={styles.ratingLabel}>Communication</Text>
+              <Text style={styles.ratingSubtext}>
+                How responsive and clear were they?
+              </Text>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Pressable
+                    key={star}
+                    onPress={() => setCommunicationRating(star)}
+                    style={styles.starButton}
+                  >
+                    <Text style={styles.starText}>
+                      {star <= communicationRating ? "★" : "☆"}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
+
+            {/* Safety Rating */}
+            <View style={styles.ratingSection}>
+              <Text style={styles.ratingLabel}>Safety</Text>
+              <Text style={styles.ratingSubtext}>
+                Did you feel safe during the activity?
+              </Text>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Pressable
+                    key={star}
+                    onPress={() => setSafetyRating(star)}
+                    style={styles.starButton}
+                  >
+                    <Text style={styles.starText}>
+                      {star <= safetyRating ? "★" : "☆"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Overall Rating */}
+            <View style={styles.ratingSection}>
+              <Text style={styles.ratingLabel}>Overall Experience</Text>
+              <Text style={styles.ratingSubtext}>
+                How was the activity overall?
+              </Text>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Pressable
+                    key={star}
+                    onPress={() => setOverallRating(star)}
+                    style={styles.starButton}
+                  >
+                    <Text style={styles.starText}>
+                      {star <= overallRating ? "★" : "☆"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Comment */}
+            <Text style={styles.label}>Additional Comments (optional)</Text>
+            <TextInput
+              style={[styles.input, styles.bioInput]}
+              value={ratingComment}
+              onChangeText={setRatingComment}
+              placeholder="Share your experience..."
+              multiline
+              numberOfLines={3}
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={skipRatingAndComplete}
+              >
+                <Text style={styles.cancelButtonText}>Skip</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={submitRatingAndComplete}
+              >
+                <Text style={styles.saveButtonText}>Submit</Text>
+              </Pressable>
+            </View>
           </View>
-        </Modal>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </Modal>
+    </ScrollView>
   );
 }
 

@@ -140,7 +140,6 @@ export default function Messages() {
   useEffect(() => {
     if (!userId) return;
 
-    // --- 1. Listen for new messages ---
     const messageChannel = supabase
       .channel("chat-list-updates")
       .on(
@@ -170,7 +169,6 @@ export default function Messages() {
       )
       .subscribe();
 
-    // --- 2. Listen for new chat participants ---
     const participantChannel = supabase
       .channel("chat-list-participation")
       .on(
@@ -182,12 +180,11 @@ export default function Messages() {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          fetchUserChats(); // refresh chats when user joins new chat
+          fetchUserChats();
         }
       )
       .subscribe();
 
-    // --- 3. Listen for event status updates ---
     const eventStatusChannel = supabase
       .channel("chat-event-status-updates")
       .on(
@@ -200,7 +197,6 @@ export default function Messages() {
         (payload) => {
           const updatedEvent = payload.new;
           if (updatedEvent.status === "completed") {
-            // Remove any chat linked to this event
             setChats((prev) =>
               prev.filter((chat) => chat.chat_id !== updatedEvent.id)
             );
@@ -209,7 +205,6 @@ export default function Messages() {
       )
       .subscribe();
 
-    // Cleanup subscriptions on unmount
     return () => {
       supabase.removeChannel(messageChannel);
       supabase.removeChannel(participantChannel);
@@ -258,15 +253,15 @@ export default function Messages() {
 }
 
 const COLORS = {
-  background: '#FAF8FC',
-  brandPurple: '#8174A0',
-  brandPink: '#C599B6',
-  textPrimary: '#2D2438',
-  textSecondary: '#6B6078',
-  textTertiary: '#9B8FA8',
-  white: '#FFFFFF',
-  cardBg: '#FFFFFF',
-  border: '#E0D8E8',
+  background: "#FAF8FC",
+  brandPurple: "#8174A0",
+  brandPink: "#C599B6",
+  textPrimary: "#2D2438",
+  textSecondary: "#6B6078",
+  textTertiary: "#9B8FA8",
+  white: "#FFFFFF",
+  cardBg: "#FFFFFF",
+  border: "#E0D8E8",
 };
 
 const styles = StyleSheet.create({
