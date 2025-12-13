@@ -1277,7 +1277,7 @@ export default function Profile() {
                 open={openDropdown}
                 value={selectedActivityId}
                 items={activities
-                  .filter((a) => a.status === "completed")
+                  .filter((a) => isActivityCompleted(a))
                   .map((a) => ({ label: a.name, value: a.id }))}
                 setOpen={setOpenDropdown}
                 setValue={setSelectedActivityId}
