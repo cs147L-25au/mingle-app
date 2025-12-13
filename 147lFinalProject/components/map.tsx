@@ -31,7 +31,6 @@ export default function Map() {
   const session = useSession();
   const getLocation = async () => {
     try {
-      // Check if we have a cached location first
       const cachedLocation = await AsyncStorage.getItem("userLocation");
       if (cachedLocation) {
         const loc = JSON.parse(cachedLocation);
@@ -43,10 +42,9 @@ export default function Map() {
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         });
-        return; // Use cached location, don't fetch new one
+        return;
       }
 
-      // If no cached location, fetch new one
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
@@ -59,8 +57,6 @@ export default function Map() {
       });
 
       setLocation(loc);
-
-      // Cache the location for future tab switches
       await AsyncStorage.setItem("userLocation", JSON.stringify(loc));
 
       const { latitude, longitude } = loc.coords;
@@ -81,7 +77,6 @@ export default function Map() {
 
   const fetchEvents = async () => {
     try {
-      // Today's date in local time, as "YYYY-MM-DD"
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -101,7 +96,6 @@ export default function Map() {
     }
   };
 
-  // Home/current location isn't (and shouldn't) be stored in DB, so this function resolves that
   const events = useMemo(() => {
     if (!region) return dbEvents;
 
@@ -142,7 +136,6 @@ export default function Map() {
     };
   }, []);
 
-  // Make the map refocus so that most markers appear
   useEffect(() => {
     if (!mapRef.current || !region) return;
     if (events.length === 0) return;
@@ -160,7 +153,6 @@ export default function Map() {
     });
   }, [region, events]);
 
-  // While we don't have a region yet, show a simple loading / error UI
   if (errorMsg) {
     return (
       <View style={styles.center}>

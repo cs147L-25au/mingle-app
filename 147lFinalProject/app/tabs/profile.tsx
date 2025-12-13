@@ -308,9 +308,8 @@ export default function Profile() {
     setLoading(false);
   };
 
-  // Helper to check if activity date is today or in the future
   const isUpcoming = (activity: Activity): boolean => {
-    if (!activity.event_date) return true; // If no date, show it
+    if (!activity.event_date) return true;
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -319,16 +318,13 @@ export default function Profile() {
     return activity.event_date >= today;
   };
 
-  // Helper to check if activity is completed for the current user
   const isActivityCompleted = (activity: Activity): boolean => {
-    // If user is the organizer and event status is completed
     if (
       activity.organizer_id === session?.user?.id &&
       activity.status === "completed"
     ) {
       return true;
     }
-    // If user is an attendee and marked it as completed
     if (activity.attendee_completed) {
       return true;
     }
