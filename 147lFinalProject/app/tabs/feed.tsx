@@ -22,6 +22,7 @@ interface MediaPost {
   name?: string;
   like_count?: number;
   liked_by_user?: boolean;
+  activityName: string;
 }
 
 export default function Feed() {
@@ -29,7 +30,6 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Get current authenticated user
   useEffect(() => {
     const getCurrentUser = async () => {
       const {
@@ -40,15 +40,15 @@ export default function Feed() {
     getCurrentUser();
   }, []);
 
-  // Fetch posts with names and like info
   const fetchPosts = async () => {
     if (!userId) return;
 
     setLoading(true);
 
+    // Fetch the latest 20 posts
     const { data: postsData, error: postsError } = await supabase
       .from("user_media")
-      .select("id, user_id, caption, media_url, created_at")
+      .select("id, user_id, caption, media_url, created_at, activity_id")
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -58,30 +58,58 @@ export default function Feed() {
       return;
     }
 
-    const userIds = Array.from(new Set(postsData.map((p) => p.user_id)));
+    // Filter out null activity_ids
+    const activityIds = Array.from(
+      new Set(postsData.map((m) => m.activity_id).filter((id) => id !== null))
+    );
 
+    // Fetch events only for valid IDs
+    const { data: eventsData, error: eventsError } = await supabase
+      .from("events")
+      .select("id, name")
+      .in("id", activityIds);
+
+    if (eventsError) {
+      console.error("Error fetching events:", eventsError);
+    }
+
+    const eventsArray = eventsData ?? [];
+
+    // Fetch profile info
+    const userIds = Array.from(new Set(postsData.map((p) => p.user_id)));
     const { data: profilesData } = await supabase
       .from("profiles")
       .select("user_id, name")
       .in("user_id", userIds);
 
+    // Fetch likes
     const postIds = postsData.map((p) => p.id);
-
     const { data: likesData } = await supabase
       .from("post_likes")
       .select("post_id, user_id")
       .in("post_id", postIds);
 
+    // Combine everything
     const postsWithExtras = postsData.map((post) => {
       const profile = profilesData.find((p) => p.user_id === post.user_id);
+
+      // Only look for activity if activity_id exists
+      const activity = post.activity_id
+        ? eventsArray.find((e) => e.id === post.activity_id)
+        : null;
+
       const likesForPost = likesData.filter((l) => l.post_id === post.id);
+
       return {
         ...post,
         name: profile?.name ?? "Unknown",
+        activityName: activity?.name ?? "",
         like_count: likesForPost.length,
         liked_by_user: likesForPost.some((l) => l.user_id === userId),
       };
     });
+
+    console.log("Posts with extras:", postsWithExtras);
 
     setPosts(postsWithExtras);
     setLoading(false);
@@ -90,7 +118,6 @@ export default function Feed() {
   useEffect(() => {
     if (userId) fetchPosts();
 
-    // Real-time likes updates
     const likesChannel = supabase
       .channel("post-likes")
       .on(
@@ -175,7 +202,12 @@ export default function Feed() {
           <View style={styles.postCard}>
             <Image source={pushPin} style={styles.pushPin} />
 
-            <Text style={styles.name}>{item.name}</Text>
+            <View style={styles.nameContainer}>
+              <Text style={styles.name}>{item.name}</Text>
+              {item.activityName && (
+                <Text style={styles.activityNameText}>{item.activityName}</Text>
+              )}
+            </View>
 
             <Image source={{ uri: item.media_url }} style={styles.postImage} />
 
@@ -223,7 +255,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-  flatListContent: { paddingVertical: 10, paddingHorizontal: 10, gap: 10 },
+  flatListContent: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    gap: 10,
+    paddingBottom: 100,
+  },
   postCard: {
     height: 450,
     borderWidth: 2,
@@ -239,22 +276,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.cardBg,
     aspectRatio: 1,
-    marginTop: 35,
+    marginTop: 55,
   },
   caption: {
     padding: 10,
-    fontSize: 14,
+    fontSize: 15,
     color: "#333",
     fontWeight: "bold",
-  },
-  name: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    fontWeight: "bold",
-    fontSize: 18,
-    color: "#333",
-    zIndex: 2,
   },
   pushPin: {
     position: "absolute",
@@ -277,5 +305,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontWeight: "bold",
+  },
+  nameContainer: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 2,
+    alignItems: "flex-start",
+  },
+  name: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "#333",
+  },
+  activityNameText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+    marginTop: 2,
   },
 });

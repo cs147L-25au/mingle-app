@@ -19,21 +19,22 @@ import { useRouter, useFocusEffect } from "expo-router";
 import useSession from "../../utils/useSession";
 import Loading from "../../components/loading";
 import { useCallback } from "react";
+import DropDownPicker from "react-native-dropdown-picker";
 
 // Mingle Brand Colors
 const COLORS = {
-  background: '#FAF8FC',
-  backgroundSecondary: '#FFFFFF',
-  brandPurple: '#8174A0',
-  brandPink: '#C599B6',
-  textPrimary: '#2D2438',
-  textSecondary: '#6B6078',
-  textTertiary: '#9B8FA8',
-  inputBorder: '#E0D8E8',
-  buttonText: '#FFFFFF',
-  white: '#FFFFFF',
-  lightPurple: '#E3DFED',
-  softPink: '#F5E6F0',
+  background: "#FAF8FC",
+  backgroundSecondary: "#FFFFFF",
+  brandPurple: "#8174A0",
+  brandPink: "#C599B6",
+  textPrimary: "#2D2438",
+  textSecondary: "#6B6078",
+  textTertiary: "#9B8FA8",
+  inputBorder: "#E0D8E8",
+  buttonText: "#FFFFFF",
+  white: "#FFFFFF",
+  lightPurple: "#E3DFED",
+  softPink: "#F5E6F0",
 };
 
 interface Profile {
@@ -65,6 +66,7 @@ interface Activity {
   attendee_count?: number;
   attendee_completed?: boolean; // For tracking if current user completed this as an attendee
   organizer_id?: string; // To check if current user is the organizer
+  event_date: string;
 }
 
 interface RatingStats {
@@ -93,6 +95,10 @@ export default function Profile() {
   const [safetyRating, setSafetyRating] = useState(0);
   const [overallRating, setOverallRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
+    null
+  );
+  const [openDropdown, setOpenDropdown] = useState(false);
 
   const session = useSession();
   const router = useRouter();
@@ -178,8 +184,10 @@ export default function Profile() {
         console.error("Error fetching ratings:", ratingsError);
       } else if (ratingsData && ratingsData.length > 0) {
         const avgCommunication =
-          ratingsData.reduce((sum, r) => sum + (r.communication_rating || 0), 0) /
-          ratingsData.length;
+          ratingsData.reduce(
+            (sum, r) => sum + (r.communication_rating || 0),
+            0
+          ) / ratingsData.length;
         const avgSafety =
           ratingsData.reduce((sum, r) => sum + (r.safety_rating || 0), 0) /
           ratingsData.length;
@@ -290,7 +298,12 @@ export default function Profile() {
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([fetchProfile(), fetchMedia(), fetchActivities(), fetchRatings()]);
+    await Promise.all([
+      fetchProfile(),
+      fetchMedia(),
+      fetchActivities(),
+      fetchRatings(),
+    ]);
     setLoading(false);
   };
 
@@ -393,7 +406,9 @@ export default function Profile() {
     }
   };
 
-  const uploadImageToStorage = async (imageUri: string): Promise<string | null> => {
+  const uploadImageToStorage = async (
+    imageUri: string
+  ): Promise<string | null> => {
     if (!session?.user?.id) {
       Alert.alert("Error", "Not authenticated");
       return null;
@@ -459,7 +474,9 @@ export default function Profile() {
       console.error("Error uploading image:", error);
       Alert.alert(
         "Upload Error",
-        `Failed to upload: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to upload: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
       );
       setUploading(false);
       return null;
@@ -492,6 +509,7 @@ export default function Profile() {
         media_type: "image",
         caption: newMediaCaption.trim(),
         created_at: new Date().toISOString(),
+        activity_id: selectedActivityId || null,
       });
 
       if (error) throw error;
@@ -536,40 +554,40 @@ export default function Profile() {
                 if (storageError) {
                   console.error("Storage deletion error:", storageError);
                 }
+
+                // Delete from database
+                const { data: deleteData, error: dbError } = await supabase
+                  .from("user_media")
+                  .delete()
+                  .eq("id", mediaId)
+                  .select();
+
+                if (dbError) {
+                  console.error("Database deletion error:", dbError);
+                  throw dbError;
+                }
+
+                console.log("Delete operation result:", deleteData);
+
+                // Verify deletion by trying to fetch the record
+                const { data: checkData, error: checkError } = await supabase
+                  .from("user_media")
+                  .select("id")
+                  .eq("id", mediaId)
+                  .maybeSingle();
+
+                if (checkData) {
+                  console.error("Photo still exists in database after deletion!");
+                  throw new Error("Photo was not deleted from database");
+                }
+
+                console.log("Verified: Photo deleted successfully from database");
+
+                // Immediately update local state to remove the item
+                setMedia(currentMedia => currentMedia.filter(item => item.id !== mediaId));
+
+                Alert.alert("Success", "Photo deleted successfully!");
               }
-
-              // Delete from database
-              const { data: deleteData, error: dbError } = await supabase
-                .from("user_media")
-                .delete()
-                .eq("id", mediaId)
-                .select();
-
-              if (dbError) {
-                console.error("Database deletion error:", dbError);
-                throw dbError;
-              }
-
-              console.log("Delete operation result:", deleteData);
-
-              // Verify deletion by trying to fetch the record
-              const { data: checkData, error: checkError } = await supabase
-                .from("user_media")
-                .select("id")
-                .eq("id", mediaId)
-                .maybeSingle();
-
-              if (checkData) {
-                console.error("Photo still exists in database after deletion!");
-                throw new Error("Photo was not deleted from database");
-              }
-
-              console.log("Verified: Photo deleted successfully from database");
-
-              // Immediately update local state to remove the item
-              setMedia(currentMedia => currentMedia.filter(item => item.id !== mediaId));
-
-              Alert.alert("Success", "Photo deleted successfully!");
             } catch (error) {
               console.error("Error deleting media:", error);
               Alert.alert("Error", "Failed to delete photo");
@@ -621,8 +639,15 @@ export default function Profile() {
 
     try {
       // Check if all ratings are provided
-      if (communicationRating === 0 || safetyRating === 0 || overallRating === 0) {
-        Alert.alert("Missing Ratings", "Please provide all ratings before submitting.");
+      if (
+        communicationRating === 0 ||
+        safetyRating === 0 ||
+        overallRating === 0
+      ) {
+        Alert.alert(
+          "Missing Ratings",
+          "Please provide all ratings before submitting."
+        );
         return;
       }
 
@@ -814,7 +839,8 @@ export default function Profile() {
           <View style={styles.ratingsSection}>
             <Text style={styles.ratingsSectionTitle}>My Organizer Rating</Text>
             <Text style={styles.ratingsCount}>
-              Based on {ratings.totalRatings} rating{ratings.totalRatings !== 1 ? "s" : ""}
+              Based on {ratings.totalRatings} rating
+              {ratings.totalRatings !== 1 ? "s" : ""}
             </Text>
 
             <View style={styles.ratingRow}>
@@ -824,7 +850,9 @@ export default function Profile() {
                   {"★".repeat(Math.round(ratings.avgCommunication))}
                   {"☆".repeat(5 - Math.round(ratings.avgCommunication))}
                 </Text>
-                <Text style={styles.ratingValue}>{ratings.avgCommunication.toFixed(1)}</Text>
+                <Text style={styles.ratingValue}>
+                  {ratings.avgCommunication.toFixed(1)}
+                </Text>
               </View>
             </View>
 
@@ -835,7 +863,9 @@ export default function Profile() {
                   {"★".repeat(Math.round(ratings.avgSafety))}
                   {"☆".repeat(5 - Math.round(ratings.avgSafety))}
                 </Text>
-                <Text style={styles.ratingValue}>{ratings.avgSafety.toFixed(1)}</Text>
+                <Text style={styles.ratingValue}>
+                  {ratings.avgSafety.toFixed(1)}
+                </Text>
               </View>
             </View>
 
@@ -846,7 +876,9 @@ export default function Profile() {
                   {"★".repeat(Math.round(ratings.avgOverall))}
                   {"☆".repeat(5 - Math.round(ratings.avgOverall))}
                 </Text>
-                <Text style={styles.ratingValue}>{ratings.avgOverall.toFixed(1)}</Text>
+                <Text style={styles.ratingValue}>
+                  {ratings.avgOverall.toFixed(1)}
+                </Text>
               </View>
             </View>
           </View>
@@ -939,7 +971,9 @@ export default function Profile() {
                       <View style={styles.activityDetailRow}>
                         <Text style={styles.activityIcon}>👥</Text>
                         <Text style={styles.activityDetailText}>
-                          {activity.attendee_count || 0} {activity.attendee_count === 1 ? 'person' : 'people'} joined
+                          {activity.attendee_count || 0}{" "}
+                          {activity.attendee_count === 1 ? "person" : "people"}{" "}
+                          joined
                         </Text>
                       </View>
                     </View>
@@ -952,7 +986,9 @@ export default function Profile() {
                       ]}
                       onPress={() => handleCompleteActivity(activity)}
                     >
-                      <Text style={styles.completeButtonText}>✓ Mark Complete</Text>
+                      <Text style={styles.completeButtonText}>
+                        ✓ Mark Complete
+                      </Text>
                     </Pressable>
                   </View>
                 ))}
@@ -1031,7 +1067,9 @@ export default function Profile() {
                       <View style={styles.activityDetailRow}>
                         <Text style={styles.activityIcon}>👥</Text>
                         <Text style={styles.activityDetailText}>
-                          {activity.attendee_count || 0} {activity.attendee_count === 1 ? 'person' : 'people'} joined
+                          {activity.attendee_count || 0}{" "}
+                          {activity.attendee_count === 1 ? "person" : "people"}{" "}
+                          joined
                         </Text>
                       </View>
                     </View>
@@ -1044,7 +1082,9 @@ export default function Profile() {
                       ]}
                       onPress={() => handleUncompleteActivity(activity)}
                     >
-                      <Text style={styles.uncompleteButtonText}>↻ Mark as Pending</Text>
+                      <Text style={styles.uncompleteButtonText}>
+                        ↻ Mark as Pending
+                      </Text>
                     </Pressable>
                   </View>
                 ))}
@@ -1078,7 +1118,9 @@ export default function Profile() {
                 key={item.id}
                 style={[
                   styles.mediaItem,
-                  index % 2 === 0 ? styles.mediaItemLeft : styles.mediaItemRight,
+                  index % 2 === 0
+                    ? styles.mediaItemLeft
+                    : styles.mediaItemRight,
                 ]}
                 onPress={() => {
                   // Optional: Add full-screen image view later
@@ -1091,7 +1133,10 @@ export default function Profile() {
                   resizeMode="cover"
                   onLoad={() => console.log(`Image loaded: ${item.id}`)}
                   onError={(error) => {
-                    console.error(`Image load error for ${item.id}:`, error.nativeEvent.error);
+                    console.error(
+                      `Image load error for ${item.id}:`,
+                      error.nativeEvent.error
+                    );
                     console.error(`Failed URL: ${item.media_url}`);
                   }}
                 />
@@ -1209,6 +1254,21 @@ export default function Profile() {
               placeholder="Add a caption..."
             />
 
+            <Text style={styles.label}>Activity</Text>
+            <DropDownPicker
+              open={openDropdown}
+              value={selectedActivityId}
+              items={activities
+                .filter((a) => a.status === "completed")
+                .map((a) => ({ label: a.name, value: a.id }))}
+              setOpen={setOpenDropdown}
+              setValue={setSelectedActivityId}
+              placeholder="Select completed activity..."
+              containerStyle={{ marginBottom: 16 }}
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownList}
+            />
+
             <View style={styles.modalButtons}>
               <Pressable
                 style={[styles.modalButton, styles.cancelButton]}
@@ -1254,13 +1314,17 @@ export default function Profile() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Rate the Organizer</Text>
             {activityToRate && (
-              <Text style={styles.ratingActivityName}>{activityToRate.name}</Text>
+              <Text style={styles.ratingActivityName}>
+                {activityToRate.name}
+              </Text>
             )}
 
             {/* Communication Rating */}
             <View style={styles.ratingSection}>
               <Text style={styles.ratingLabel}>Communication</Text>
-              <Text style={styles.ratingSubtext}>How responsive and clear were they?</Text>
+              <Text style={styles.ratingSubtext}>
+                How responsive and clear were they?
+              </Text>
               <View style={styles.starsContainer}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Pressable
@@ -1279,7 +1343,9 @@ export default function Profile() {
             {/* Safety Rating */}
             <View style={styles.ratingSection}>
               <Text style={styles.ratingLabel}>Safety</Text>
-              <Text style={styles.ratingSubtext}>Did you feel safe during the activity?</Text>
+              <Text style={styles.ratingSubtext}>
+                Did you feel safe during the activity?
+              </Text>
               <View style={styles.starsContainer}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Pressable
@@ -1298,7 +1364,9 @@ export default function Profile() {
             {/* Overall Rating */}
             <View style={styles.ratingSection}>
               <Text style={styles.ratingLabel}>Overall Experience</Text>
-              <Text style={styles.ratingSubtext}>How was the activity overall?</Text>
+              <Text style={styles.ratingSubtext}>
+                How was the activity overall?
+              </Text>
               <View style={styles.starsContainer}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Pressable
@@ -1918,12 +1986,6 @@ const styles = StyleSheet.create({
   ratingSection: {
     marginBottom: 24,
   },
-  ratingLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
-    marginBottom: 4,
-  },
   ratingSubtext: {
     fontSize: 13,
     color: COLORS.textSecondary,
@@ -1940,5 +2002,20 @@ const styles = StyleSheet.create({
   starText: {
     fontSize: 32,
     color: COLORS.brandPurple,
+  },
+  dropdownList: {
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: COLORS.inputBorder,
+    borderRadius: 8,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: 12,
+    height: 50,
+    justifyContent: "center",
   },
 });
