@@ -142,15 +142,11 @@ export default function ChatRoom() {
   };
 
   const fetchUserNames = async (msgs: Message[]) => {
-    // 1. Get all unique user_ids from the messages
     const userIds = Array.from(new Set(msgs.map((m) => m.user_id)));
-
-    // 2. Filter out IDs we already know
     const unknownIds = userIds.filter((id) => !profilesMap[id]);
 
-    if (unknownIds.length === 0) return; // Nothing new to fetch
+    if (unknownIds.length === 0) return;
 
-    // 3. Fetch profiles from Supabase
     const { data, error } = await supabase
       .from("profiles")
       .select("user_id, name")
@@ -161,13 +157,11 @@ export default function ChatRoom() {
       return;
     }
 
-    // 4. Update the map
     const newMap = { ...profilesMap };
     data.forEach((profile: any) => {
       newMap[profile.user_id] = profile.name;
     });
 
-    // Add fallback for any IDs not found in profiles table
     unknownIds.forEach((id) => {
       if (!newMap[id]) newMap[id] = "Unknown User";
     });
