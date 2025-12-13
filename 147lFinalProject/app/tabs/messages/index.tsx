@@ -279,6 +279,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 20,
     gap: 12,
+    paddingBottom: 100,
   },
   messageBox: {
     backgroundColor: COLORS.cardBg,
