@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { View, StyleSheet, Text, ActivityIndicator } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Region } from "react-native-maps";
 import * as Location from "expo-location";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { mapStyle } from "../assets/mapStyle";
 import { Event } from "../utils/types";
 import EventMarkers from "./marker";
@@ -30,6 +31,22 @@ export default function Map() {
   const session = useSession();
   const getLocation = async () => {
     try {
+      // Check if we have a cached location first
+      const cachedLocation = await AsyncStorage.getItem("userLocation");
+      if (cachedLocation) {
+        const loc = JSON.parse(cachedLocation);
+        setLocation(loc);
+        const { latitude, longitude } = loc.coords;
+        setRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        });
+        return; // Use cached location, don't fetch new one
+      }
+
+      // If no cached location, fetch new one
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
@@ -42,6 +59,9 @@ export default function Map() {
       });
 
       setLocation(loc);
+
+      // Cache the location for future tab switches
+      await AsyncStorage.setItem("userLocation", JSON.stringify(loc));
 
       const { latitude, longitude } = loc.coords;
       setRegion({
@@ -177,7 +197,7 @@ export default function Map() {
         visible={!!selectedEvent}
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
-        currentUserId={session.user.id}
+        currentUserId={session?.user?.id || ""}
       />
     </View>
   );
